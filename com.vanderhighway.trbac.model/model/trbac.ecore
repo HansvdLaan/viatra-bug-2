@@ -16,10 +16,6 @@
         iD="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="schedule" eType="#//Schedule"
         containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="map" upperBound="-1" eType="#//EStringToEStringMap"
-        containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="sumnumbers" upperBound="-1"
-        eType="#//sumnum" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="User">
     <eStructuralFeatures xsi:type="ecore:EReference" name="UR" upperBound="-1" eType="#//Role"
@@ -123,13 +119,6 @@
         eOpposite="#//DayScheduleTimeRange/previous"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="previous" eType="#//DayScheduleTimeRange"
         eOpposite="#//DayScheduleTimeRange/next"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="EStringToEStringMap" instanceClassName="java.util.Map$Entry">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="key" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="value" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="sumnum">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="num" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="DayOfYearSchedule" eSuperTypes="#//DaySchedule">
     <eStructuralFeatures xsi:type="ecore:EReference" name="dayOfWeekSchedule" eType="#//DayOfWeekSchedule"

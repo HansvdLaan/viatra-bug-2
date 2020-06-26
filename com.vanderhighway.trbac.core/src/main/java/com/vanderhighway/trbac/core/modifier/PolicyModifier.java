@@ -27,11 +27,11 @@ public class PolicyModifier {
 	@Extension
 	public IModelManipulations manipulation;
 
-	@Extension
-	private BatchTransformationRuleFactory batchFactory = new BatchTransformationRuleFactory();
+	//@Extension
+	//public BatchTransformationRuleFactory batchFactory = new BatchTransformationRuleFactory();
 
-	@Extension
-	private BatchTransformation transformation;
+	//@Extension
+	//public BatchTransformation transformation;
 
 	@Extension
 	private TRBACPackage ePackage = TRBACPackage.eINSTANCE;
@@ -103,7 +103,6 @@ public class PolicyModifier {
 	}
 
 	public TimeRange addTimeRange(TimeRangeGroup rangeGroup, DaySchedule daySchedule, String rangeName, IntegerInterval interval) throws ModelManipulationException {
-		//System.out.println("TimeRange " + rangeName + " created!");
 		TimeRange timeRange = (TimeRange) this.manipulation.createChild(rangeGroup,
 				ePackage.getTimeRangeGroup_TimeRanges(), ePackage.getTimeRange());
 		this.manipulation.set(timeRange, ePackage.getTimeRange_Name(), rangeName);
@@ -113,12 +112,13 @@ public class PolicyModifier {
 		return timeRange;
 	}
 
+	public TimeRange updateTimeRange(TimeRange timeRange, IntegerInterval interval) throws ModelManipulationException {
+		this.manipulation.set(timeRange, ePackage.getTimeRange_Start(), interval.getStart());
+		this.manipulation.set(timeRange, ePackage.getTimeRange_End(), interval.getEnd());
+		return timeRange;
+	}
+
 	public void removeTimeRange(TimeRange timeRange) throws ModelManipulationException {
-//		List<DayScheduleTimeRange> list = new ArrayList<>(range.getSchedulerange());
-//		for(DayScheduleTimeRange sr: list) {
-//			manipulation.remove(sr, ePackage.getDayScheduleTimeRange_Range(), range);
-//		}
-//		manipulation.remove(range.getDayschedule(), ePackage.getDaySchedule_Ranges(), range);
 		manipulation.remove(timeRange);
 	}
 
@@ -129,6 +129,11 @@ public class PolicyModifier {
 		manipulation.set(scheduleTimeRange, ePackage.getDayScheduleTimeRange_Start(), interval.getStart());
 		manipulation.set(scheduleTimeRange, ePackage.getDayScheduleTimeRange_End(), interval.getEnd());
 		return scheduleTimeRange;
+	}
+
+	public void updateDayScheduleTimeRange(DayScheduleTimeRange timeRange, IntegerInterval interval) throws ModelManipulationException{
+		manipulation.set(timeRange, ePackage.getDayScheduleTimeRange_Start(), interval.getStart());
+		manipulation.set(timeRange, ePackage.getDayScheduleTimeRange_Start(), interval.getEnd());
 	}
 
 	public void removeDayScheduleTimeRange(DayScheduleTimeRange scheduleTimeRange) throws ModelManipulationException {
@@ -237,37 +242,6 @@ public class PolicyModifier {
 
 	// -------------------------------------------
 
-
-	public void execute(BatchTransformationRule rule) {
-		this.transformation.getTransformationStatements().fireOne(rule);
-	}
-
-	public void execute(BatchTransformationRule... rules) {
-		for (int i = 0; i < rules.length; i++) {
-			this.transformation.getTransformationStatements().fireOne(rules[i]);
-		}
-
-	}
-
-	public void executeCompound(BatchTransformationRule rule) throws InvocationTargetException {
-		Callable<Void> callable = () -> {
-			this.transformation.getTransformationStatements().fireOne(rule);
-			return null;
-		};
-		engine.delayUpdatePropagation(callable);
-	}
-
-	public void executeCompound(BatchTransformationRule... rules) throws InvocationTargetException {
-		for (int i = 0; i < rules.length; i++) {
-			final BatchTransformationRule rule = rules[i];
-			Callable<Void> callable = () -> {
-				this.transformation.getTransformationStatements().fireOne(rule);
-				return null;
-			};
-			engine.delayUpdatePropagation(callable);
-		}
-	}
-
 	public IModelManipulations getManipulation() {
 		return manipulation;
 	}
@@ -276,21 +250,13 @@ public class PolicyModifier {
 		this.manipulation = manipulation;
 	}
 
-	public BatchTransformationRuleFactory getBatchFactory() {
-		return batchFactory;
-	}
-
-	public void setBatchFactory(BatchTransformationRuleFactory batchFactory) {
-		this.batchFactory = batchFactory;
-	}
-
-	public void dispose() {
-		if (!Objects.equal(this.transformation, null)) {
-			this.transformation.dispose();
-		}
-		this.transformation = null;
-		return;
-	}
+//	public void dispose() {
+//		if (!Objects.equal(this.transformation, null)) {
+//			this.transformation.dispose();
+//		}
+//		this.transformation = null;
+//		return;
+//	}
 
 
 }

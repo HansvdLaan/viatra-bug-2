@@ -17,8 +17,6 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//Policy/sessions"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//Policy/name"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//Policy/schedule"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//Policy/map"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//Policy/sumnumbers"/>
     </genClasses>
     <genClasses ecoreClass="trbac.ecore#//User">
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference trbac.ecore#//User/UR"/>
@@ -85,13 +83,6 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//DayScheduleTimeRange/name"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference trbac.ecore#//DayScheduleTimeRange/next"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference trbac.ecore#//DayScheduleTimeRange/previous"/>
-    </genClasses>
-    <genClasses ecoreClass="trbac.ecore#//EStringToEStringMap">
-      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//EStringToEStringMap/key"/>
-      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//EStringToEStringMap/value"/>
-    </genClasses>
-    <genClasses ecoreClass="trbac.ecore#//sumnum">
-      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//sumnum/num"/>
     </genClasses>
     <genClasses ecoreClass="trbac.ecore#//DayOfYearSchedule">
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference trbac.ecore#//DayOfYearSchedule/dayOfWeekSchedule"/>
