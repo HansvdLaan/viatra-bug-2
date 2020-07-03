@@ -69,8 +69,9 @@ public class PolicyAutomaticModifier {
                         CRUDActivationStateEnum.CREATED, (TimeRangeP.Match it) -> {
                             try {
                                 System.out.println("TRIGGERED EventDrivenTransformationRule TimeRangeP CREATED:" + it.prettyPrint());
-                                this.policyModifier.addDayScheduleTimeRange(it.getDaySchedule(),
+                                DayScheduleTimeRange range = this.policyModifier.addDayScheduleTimeRange(it.getDaySchedule(),
                                         it.getTimeRange().getName(), new IntegerInterval(it.getStarttime(), it.getEndtime()));
+                                this.policyModifier.manipulation.addTo(it.getTimeRange(), ePackage.getTimeRange_DayScheduleTimeRanges(), range);
                             } catch (ModelManipulationException e) {
                                 e.printStackTrace();
                             }
@@ -96,6 +97,10 @@ public class PolicyAutomaticModifier {
                 ).addLifeCycle(Lifecycles.getDefault(true, true))
                         .name("process-timeranges").build();
         return dayrangerule;
+    }
+
+    public EventDrivenTransformation getTransformation() {
+        return transformation;
     }
 
 }
