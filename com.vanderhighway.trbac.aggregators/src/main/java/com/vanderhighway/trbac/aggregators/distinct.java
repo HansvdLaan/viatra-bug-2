@@ -18,13 +18,13 @@ import org.eclipse.viatra.query.runtime.matchers.psystem.aggregations.IAggregato
 
 @AggregatorType(
         parameterTypes = {Object.class},
-        returnTypes = {TimeRangeGroupSet.class})
+        returnTypes = {Scenario.class})
 public final class distinct implements IAggregatorFactory {
 
 
     @Override
     public BoundAggregator getAggregatorLogic(Class<?> domainClass) {
-        return new BoundAggregator(DistinctOperator.INSTANCE, domainClass, TimeRangeGroupSet.class);
+        return new BoundAggregator(DistinctOperator.INSTANCE, domainClass, Scenario.class);
     }
 }
 

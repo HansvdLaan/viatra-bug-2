@@ -109,7 +109,7 @@
 <!--						<manifest>-->
 <!--							<addClasspath>true</addClasspath>-->
 <!--							<classpathPrefix>lib/</classpathPrefix>-->
-<!--							<mainClass>com.vanderhighway.trbac.patterns.PolicyValidatorCLI</mainClass>-->
+<!--							<mainClass>com.vanderhighway.trbac.patterns.PolicyValidatorCLIOld</mainClass>-->
 <!--							<useUniqueVersions>false</useUniqueVersions>-->
 <!--						</manifest>-->
 <!--					</archive>-->

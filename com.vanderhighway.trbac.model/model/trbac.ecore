@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="trbac" nsURI="https://vanderhighway.com/trbac/2020" nsPrefix="trbac">
-  <eClassifiers xsi:type="ecore:EClass" name="Policy">
+  <eClassifiers xsi:type="ecore:EClass" name="AuthorizationPolicy">
     <eStructuralFeatures xsi:type="ecore:EReference" name="users" upperBound="-1"
         eType="#//User" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="roles" upperBound="-1"
@@ -10,22 +10,16 @@
         eType="#//Demarcation" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="permissions" upperBound="-1"
         eType="#//Permission" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="sessions" upperBound="-1"
-        eType="#//Session" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
         iD="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="schedule" eType="#//Schedule"
         containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="map" upperBound="-1" eType="#//EStringToEStringMap"
+    <eStructuralFeatures xsi:type="ecore:EReference" name="test" upperBound="-1" eType="#//Test"
         containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="sumnumbers" upperBound="-1"
-        eType="#//sumnum" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="User">
     <eStructuralFeatures xsi:type="ecore:EReference" name="UR" upperBound="-1" eType="#//Role"
         eOpposite="#//Role/RU"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="US" upperBound="-1" eType="#//Session"
-        eOpposite="#//Session/SU"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
         iD="true"/>
   </eClassifiers>
@@ -40,8 +34,8 @@
         eType="#//Role" eOpposite="#//Role/juniors"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
         iD="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="constraintedBy" upperBound="-1"
-        eType="#//PeriodicEvent" eOpposite="#//PeriodicEvent/role"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="constrainedBy" upperBound="-1"
+        eType="#//TemporalGrantRule" eOpposite="#//TemporalGrantRule/role"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Demarcation">
     <eStructuralFeatures xsi:type="ecore:EReference" name="DR" upperBound="-1" eType="#//Role"
@@ -55,19 +49,14 @@
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
         iD="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="constrainedBy" upperBound="-1"
-        eType="#//PeriodicEvent" eOpposite="#//PeriodicEvent/demarcation"/>
+        eType="#//TemporalGrantRule" eOpposite="#//TemporalGrantRule/demarcation"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Permission">
     <eStructuralFeatures xsi:type="ecore:EReference" name="PD" upperBound="-1" eType="#//Demarcation"
         eOpposite="#//Demarcation/DP"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
         iD="true"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="Session">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="SU" upperBound="-1" eType="#//User"
-        eOpposite="#//User/US"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
-        iD="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="PO" eType="#//Object" eOpposite="#//Object/OP"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="TimeRange">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="start" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
@@ -75,7 +64,7 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="daySchedule" eType="#//DaySchedule"
         eOpposite="#//DaySchedule/timeRanges"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="dayScheduleTimeRanges"
-        upperBound="-1" eType="#//DayScheduleTimeRange" eOpposite="#//DayScheduleTimeRange/timeRanges"/>
+        upperBound="-1" eType="#//DayScheduleTimeRange" eOpposite="#//DayScheduleTimeRange/temporalContextTimeRanges"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
         iD="true"/>
   </eClassifiers>
@@ -84,18 +73,18 @@
         iD="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="timeRanges" upperBound="-1"
         eType="#//TimeRange" eOpposite="#//TimeRange/daySchedule"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="dayScheduleTimeRanges"
-        upperBound="-1" eType="#//DayScheduleTimeRange" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="instances" upperBound="-1"
+        eType="#//DayScheduleTimeRange" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Schedule">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
         iD="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="daySchedules" upperBound="-1"
         eType="#//DaySchedule" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="timeRangeGroups" upperBound="-1"
-        eType="#//TimeRangeGroup" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="periodicevent" upperBound="-1"
-        eType="#//PeriodicEvent" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="temporalContexts" upperBound="-1"
+        eType="#//TemporalContext" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="temporalGrantRules" upperBound="-1"
+        eType="#//TemporalGrantRule" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="DayOfWeekSchedule" eSuperTypes="#//DaySchedule">
     <eStructuralFeatures xsi:type="ecore:EReference" name="DayOfYearSchedules" upperBound="-1"
@@ -105,31 +94,21 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="dayOfYearSchedules" upperBound="-1"
         eType="#//DayOfYearSchedule" eOpposite="#//DayOfYearSchedule/dayOfMonthSchedule"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="TimeRangeGroup">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="timeRanges" upperBound="-1"
+  <eClassifiers xsi:type="ecore:EClass" name="TemporalContext">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="instances" upperBound="-1"
         eType="#//TimeRange" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
         iD="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="periodicEvents" upperBound="-1"
-        eType="#//PeriodicEvent" eOpposite="#//PeriodicEvent/timeRangeGroups"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="temporalGrantRules" upperBound="-1"
+        eType="#//TemporalGrantRule" eOpposite="#//TemporalGrantRule/temporalContext"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="DayScheduleTimeRange">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="start" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="end" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="timeRanges" upperBound="-1"
-        eType="#//TimeRange" eOpposite="#//TimeRange/dayScheduleTimeRanges"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  <eClassifiers xsi:type="ecore:EClass" name="DayScheduleTimeRange" eSuperTypes="#//TimeRange">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="temporalContextTimeRanges"
+        upperBound="-1" eType="#//TimeRange" eOpposite="#//TimeRange/dayScheduleTimeRanges"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="next" eType="#//DayScheduleTimeRange"
         eOpposite="#//DayScheduleTimeRange/previous"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="previous" eType="#//DayScheduleTimeRange"
         eOpposite="#//DayScheduleTimeRange/next"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="EStringToEStringMap" instanceClassName="java.util.Map$Entry">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="key" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="value" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="sumnum">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="num" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="DayOfYearSchedule" eSuperTypes="#//DaySchedule">
     <eStructuralFeatures xsi:type="ecore:EReference" name="dayOfWeekSchedule" eType="#//DayOfWeekSchedule"
@@ -137,14 +116,40 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="dayOfMonthSchedule" eType="#//DayOfMonthSchedule"
         eOpposite="#//DayOfMonthSchedule/dayOfYearSchedules"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="PeriodicEvent">
+  <eClassifiers xsi:type="ecore:EClass" name="TemporalGrantRule">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="priority" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="enable" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Boolean"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="role" eType="#//Role" eOpposite="#//Role/constraintedBy"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="role" eType="#//Role" eOpposite="#//Role/constrainedBy"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="demarcation" eType="#//Demarcation"
         eOpposite="#//Demarcation/constrainedBy"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="timeRangeGroups" upperBound="-1"
-        eType="#//TimeRangeGroup" eOpposite="#//TimeRangeGroup/periodicEvents"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="temporalContext" eType="#//TemporalContext"
+        eOpposite="#//TemporalContext/temporalGrantRules"/>
   </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Object">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+        iD="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="OP" eType="#//Permission"
+        eOpposite="#//Permission/PO"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SecurityPolicy">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+        iD="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="authorizationPolicy" eType="#//AuthorizationPolicy"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="buildings" upperBound="-1"
+        eType="#//Building" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Building">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+        iD="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="securityzones" upperBound="-1"
+        eType="#//SecurityZone" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SecurityZone" eSuperTypes="#//Object">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="public" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Boolean"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="reachable" upperBound="-1"
+        eType="#//SecurityZone"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Test"/>
 </ecore:EPackage>

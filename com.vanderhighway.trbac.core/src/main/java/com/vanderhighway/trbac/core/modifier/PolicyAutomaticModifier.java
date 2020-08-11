@@ -48,13 +48,13 @@ public class PolicyAutomaticModifier {
     private PolicyModifier policyModifier;
     Map<String,IntervalTree> trees;
 
-    public PolicyAutomaticModifier(AdvancedViatraQueryEngine engine, PolicyModifier policyModifier, Policy policy) {
+    public PolicyAutomaticModifier(AdvancedViatraQueryEngine engine, PolicyModifier policyModifier, SecurityPolicy policy) {
         this.engine = engine;
         this.policyModifier = policyModifier;
         this.trees = new HashMap<>();
 
-        if(policy.getSchedule() != null) {
-            for (DaySchedule daySchedule : policy.getSchedule().getDaySchedules()) {
+        if(policy.getAuthorizationPolicy().getSchedule() != null) {
+            for (DaySchedule daySchedule : policy.getAuthorizationPolicy().getSchedule().getDaySchedules()) {
                 IntervalTree tree = IntervalTreeBuilder.newBuilder()
                         .usePredefinedType(IntervalTreeBuilder.IntervalType.LONG)
                         .collectIntervals(interval -> new ListIntervalCollection())
@@ -121,7 +121,7 @@ public class PolicyAutomaticModifier {
         }
 
         public Void call() throws Exception {
-            IntervalTree tree = trees.get(it.getTimeRange().getDaySchedule().getName());
+            IntervalTree tree = trees.get(it.getInstance().getDaySchedule().getName());
             IntervalUtil.processAddRange(modifier, tree, it);
             return null;
         }
@@ -137,7 +137,7 @@ public class PolicyAutomaticModifier {
         }
 
         public Void call() throws Exception {
-            IntervalTree tree = trees.get(it.getTimeRange().getDaySchedule().getName());
+            IntervalTree tree = trees.get(it.getInstance().getDaySchedule().getName());
             IntervalUtil.processRemoveRange(modifier, tree, it);
             return null;
         }
@@ -165,11 +165,11 @@ public class PolicyAutomaticModifier {
                         CRUDActivationStateEnum.CREATED, (RangeP.Match it) -> {
                             //System.out.println("DayRangeMatch CREATED:" + it.toString());
                             try {
-                                IntervalTree tree = trees.get(it.getTimeRange().getDaySchedule().getName());
+                                IntervalTree tree = trees.get(it.getInstance().getDaySchedule().getName());
 
                                 //Check if the match hasn't been processed before, e.g. in
                                 // the case of the always day schedule time ranges.
-                                if(it.getTimeRange().getDayScheduleTimeRanges().size() == 0) {
+                                if(it.getInstance().getDayScheduleTimeRanges().size() == 0) {
                                     IntervalUtil.processAddRange(this.policyModifier, tree, it);
                                 }
                             } catch (ModelManipulationException e) {
@@ -181,7 +181,7 @@ public class PolicyAutomaticModifier {
                         }).action(
                         CRUDActivationStateEnum.DELETED, (RangeP.Match it) -> {
                             try {
-                                IntervalTree tree = trees.get(it.getTimeRange().getDaySchedule().getName());
+                                IntervalTree tree = trees.get(it.getInstance().getDaySchedule().getName());
                                 IntervalUtil.processRemoveRange(this.policyModifier, tree, it);
                             } catch (ModelManipulationException e) {
                                 e.printStackTrace();

@@ -2,10 +2,7 @@ package com.vanderhighway.trbac.core.validator;
 
 import com.brein.time.timeintervals.indexes.IntervalTree;
 import com.brein.time.timeintervals.intervals.IntegerInterval;
-import com.vanderhighway.trbac.patterns.AccessRelation;
-import com.vanderhighway.trbac.patterns.DisabledPriority;
-import com.vanderhighway.trbac.patterns.EnabledPriority;
-import com.vanderhighway.trbac.patterns.TimeRangeGroupCollectionEnabled;
+import com.vanderhighway.trbac.patterns.*;
 import org.apache.log4j.Logger;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.viatra.query.runtime.api.AdvancedViatraQueryEngine;
@@ -31,8 +28,8 @@ public class PolicyValidator {
     }
 
     //TODO: move this to somewhere else!
-    public void addChangeListeners(AdvancedViatraQueryEngine engine) {
-        // fireNow = true parameter means all current matches are sent to the listener
+    public void addChangeListeners(AdvancedViatraQueryEngine engine, boolean fireNow) {
+        //fireNow = true ; //parameter means all current matches are sent to the listener
 
         // Add some other Listeners
         //engine.addMatchUpdateListener(UserShouldHaveARole.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getUserShouldHaveARoleUpdateListener(), true);
@@ -76,10 +73,14 @@ public class PolicyValidator {
         //engine.addMatchUpdateListener(EnabledPriority.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getEnabledPriorityUpdateListener(), true);
         //engine.addMatchUpdateListener(DisabledPriority.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getDisabledPriorityUpdateListener(), true);
         //engine.addMatchUpdateListener(TimeRangeGroupCollectionEnabled.Matcher.on(engine), ListenerFactory.getTimeRangeGroupCollectionEnabledUpdateListener(), true);
-        engine.addMatchUpdateListener(AccessRelation.Matcher.on(engine), ListenerFactory.getAccessRelationUpdateListener(), true);
+        engine.addMatchUpdateListener(AccessRelation.Matcher.on(engine), ListenerFactory.getAccessRelationUpdateListener(), fireNow);
         //engine.addMatchUpdateListener(AllJuniors.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getAllJuniorsUpdateListener(), true);
 
-        //engine.addMatchUpdateListener(TimeRangeGroup.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getTimeRangeGroupUpdateListener(), true);
+        engine.addMatchUpdateListener(Reachable.Matcher.on(engine), ListenerFactory.getReachableUpdateListener(), fireNow);
+        engine.addMatchUpdateListener(ReachableAccess.Matcher.on(engine), ListenerFactory.getReachableAccessUpdateListener(), fireNow);
+        engine.addMatchUpdateListener(UnreachableAccess.Matcher.on(engine), ListenerFactory.getUnreachableAccessUpdateListener(), fireNow);
+
+        engine.addMatchUpdateListener(Scenarios.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getScenarioUpdateListener(), fireNow);
     }
 
 }

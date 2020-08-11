@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
  * http://www.eclipse.org/legal/epl-v20.html.
- * 
+ *
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
 
@@ -11,7 +11,7 @@ import com.google.common.reflect.TypeToken;
 import com.vanderhighway.trbac.core.modifier.PolicyAutomaticModifier;
 import com.vanderhighway.trbac.core.modifier.PolicyModifier;
 import com.vanderhighway.trbac.core.validator.PolicyValidator;
-import com.vanderhighway.trbac.model.trbac.model.Policy;
+import com.vanderhighway.trbac.model.trbac.model.SecurityPolicy;
 import com.vanderhighway.trbac.model.trbac.model.TRBACPackage;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
@@ -19,7 +19,12 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 import org.eclipse.viatra.query.runtime.api.AdvancedViatraQueryEngine;
+import org.eclipse.viatra.query.runtime.api.ViatraQueryEngineOptions;
+import org.eclipse.viatra.query.runtime.base.itc.alg.incscc.IncSCCAlg;
 import org.eclipse.viatra.query.runtime.emf.EMFScope;
+import org.eclipse.viatra.query.runtime.rete.matcher.DRedReteBackendFactory;
+import org.eclipse.viatra.query.runtime.rete.matcher.ReteBackendFactory;
+import org.eclipse.viatra.query.runtime.rete.matcher.TimelyReteBackendFactory;
 import org.eclipse.viatra.transformation.runtime.emf.modelmanipulation.ModelManipulationException;
 
 import java.io.IOException;
@@ -47,34 +52,28 @@ public class PolicyValidatorMain {
 		Resource.Factory.Registry.INSTANCE.getExtensionToFactoryMap().put("trbac", new XMIResourceFactoryImpl());
 		Resource.Factory.Registry.INSTANCE.getContentTypeToFactoryMap().put("*", new XMIResourceFactoryImpl());
 
-		LocalDateTime now = LocalDateTime.now();
 
 		ResourceSet set = new ResourceSetImpl();
 		//URI uri = URI.createFileURI("models/basic/intervals.trbac");
-		URI uri = URI.createFileURI("empty_policy_trebla.trbac");
+		URI uri = URI.createFileURI("simple_company.trbac");
 		Resource resource = set.getResource(uri, true);
 
-		LocalDateTime now2 =  LocalDateTime.now();
-		System.out.println(now.until(now2, ChronoUnit.SECONDS));
 
-		final AdvancedViatraQueryEngine engine = AdvancedViatraQueryEngine.createUnmanagedEngine(new EMFScope(set));
+		ViatraQueryEngineOptions options = ViatraQueryEngineOptions.defineOptions().withDefaultBackend(DRedReteBackendFactory.INSTANCE).build();
+		final AdvancedViatraQueryEngine engine = AdvancedViatraQueryEngine.createUnmanagedEngine(new EMFScope(set), options);
 
-		LocalDateTime now3 =  LocalDateTime.now();
-		System.out.println(now2.until(now3, ChronoUnit.SECONDS));
 
-		PolicyModifier modifier = new PolicyModifier(engine, (Policy) resource.getContents().get(0), resource);
-		PolicyValidator validator = new PolicyValidator(engine);
-		validator.addChangeListeners(engine);
+		PolicyModifier modifier = new PolicyModifier(engine, (SecurityPolicy) resource.getContents().get(0), resource);
 
 		modifier.addRole("RoleTest");
 
-		PolicyAutomaticModifier automaticModifier = new PolicyAutomaticModifier(engine, modifier, (Policy) resource.getContents().get(0));
+		PolicyAutomaticModifier automaticModifier = new PolicyAutomaticModifier(engine, modifier, (SecurityPolicy) resource.getContents().get(0));
 
 		automaticModifier.initialize();
 		automaticModifier.execute();
 
-		LocalDateTime now4 =  LocalDateTime.now();
-		System.out.println(now3.until(now4, ChronoUnit.SECONDS));
+		PolicyValidator validator = new PolicyValidator(engine);
+		validator.addChangeListeners(engine, false);
 
 		//modifier.execute(modifier.removeRange());
 		//modifier.addRole("final!");

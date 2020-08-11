@@ -7,7 +7,7 @@ import org.eclipse.viatra.query.runtime.matchers.psystem.aggregations.IMultisetA
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class DistinctOperator<D> implements IMultisetAggregationOperator<D, Multiset<D>, TimeRangeGroupSet> {
+public class DistinctOperator<D> implements IMultisetAggregationOperator<D, Multiset<D>, Scenario> {
 
     public static final DistinctOperator INSTANCE = new DistinctOperator();
 
@@ -45,13 +45,13 @@ public class DistinctOperator<D> implements IMultisetAggregationOperator<D, Mult
     }
 
     @Override
-    public TimeRangeGroupSet getAggregate(Multiset<D> result) {
-        return new TimeRangeGroupSet(result.elementSet());
+    public Scenario getAggregate(Multiset<D> result) {
+        return new Scenario(result.elementSet());
     }
 
     @Override
-    public TimeRangeGroupSet aggregateStream(Stream<D> stream) {
-        return new TimeRangeGroupSet(stream.collect(Collectors.toSet()));
+    public Scenario aggregateStream(Stream<D> stream) {
+        return new Scenario(stream.collect(Collectors.toSet()));
     }
 
 

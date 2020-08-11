@@ -3,6 +3,7 @@ package com.vanderhighway.trbac.core.modifier;
 import com.brein.time.timeintervals.intervals.IntegerInterval;
 import com.google.common.base.Objects;
 import com.vanderhighway.trbac.model.trbac.model.*;
+import com.vanderhighway.trbac.model.trbac.model.Object;
 import com.vanderhighway.trbac.model.trbac.model.TRBACPackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.viatra.query.runtime.api.AdvancedViatraQueryEngine;
@@ -15,7 +16,6 @@ import org.eclipse.viatra.transformation.runtime.emf.transformation.batch.BatchT
 import org.eclipse.xtext.xbase.lib.Extension;
 
 import java.lang.reflect.InvocationTargetException;
-import java.time.Period;
 import java.util.concurrent.Callable;
 
 public class PolicyModifier {
@@ -38,13 +38,13 @@ public class PolicyModifier {
 
 	private AdvancedViatraQueryEngine engine;
 
-	private Policy policy;
+	private SecurityPolicy securityPolicy;
 	private Resource resource;
 
-	public PolicyModifier(final AdvancedViatraQueryEngine engine, Policy policy, Resource resource) {
+	public PolicyModifier(final AdvancedViatraQueryEngine engine, SecurityPolicy securityPolicy, Resource resource) {
 		this.engine = engine;
 		this.manipulation = new SimpleModelManipulations(this.engine);
-		this.policy = policy;
+		this.securityPolicy = securityPolicy;
 		this.resource = resource;
 		//this.transformation = BatchTransformation.forEngine(this.engine).build();
 	}
@@ -52,7 +52,8 @@ public class PolicyModifier {
 	// ---------- Add / Remove Authorization Model Entities ----------
 
 	public User addUser(String name) throws ModelManipulationException {
-		User user = (User) manipulation.createChild(policy, ePackage.getPolicy_Users(), ePackage.getUser());
+		User user = (User) manipulation.createChild(securityPolicy.getAuthorizationPolicy(),
+				ePackage.getAuthorizationPolicy_Users(), ePackage.getUser());
 		manipulation.set(user, ePackage.getUser_Name(), name);
 		return user;
 	}
@@ -62,7 +63,8 @@ public class PolicyModifier {
 	}
 
 	public Role addRole(String name) throws ModelManipulationException {
-		Role role = (Role) manipulation.createChild(policy, ePackage.getPolicy_Roles(), ePackage.getRole());
+		Role role = (Role) manipulation.createChild(securityPolicy.getAuthorizationPolicy(),
+				ePackage.getAuthorizationPolicy_Roles(), ePackage.getRole());
 		manipulation.set(role, ePackage.getRole_Name(), name);
 		return role;
 	}
@@ -72,7 +74,8 @@ public class PolicyModifier {
 	}
 
 	public Demarcation addDemarcation(String name) throws ModelManipulationException {
-		Demarcation demarcation = (Demarcation) manipulation.createChild(policy, ePackage.getPolicy_Demarcations(), ePackage.getDemarcation());
+		Demarcation demarcation = (Demarcation) manipulation.createChild(securityPolicy.getAuthorizationPolicy(),
+				ePackage.getAuthorizationPolicy_Demarcations(), ePackage.getDemarcation());
 		manipulation.set(demarcation, ePackage.getDemarcation_Name(), name);
 		return demarcation;
 	}
@@ -82,7 +85,8 @@ public class PolicyModifier {
 	}
 
 	public Permission addPermission(String name) throws ModelManipulationException {
-		Permission permission = (Permission) manipulation.createChild(policy, ePackage.getPolicy_Permissions(), ePackage.getPermission());
+		Permission permission = (Permission) manipulation.createChild(securityPolicy.getAuthorizationPolicy(),
+				ePackage.getAuthorizationPolicy_Permissions(), ePackage.getPermission());
 		manipulation.set(permission, ePackage.getPermission_Name(), name);
 		return permission;
 	}
@@ -91,21 +95,21 @@ public class PolicyModifier {
 		manipulation.remove(permission);
 	}
 
-	public TimeRangeGroup addTimeRangeGroup(String name) throws ModelManipulationException {
-		Schedule schedule = policy.getSchedule();
-		TimeRangeGroup rangeGroup = (TimeRangeGroup) this.manipulation.createChild(schedule, ePackage.getSchedule_TimeRangeGroups(), ePackage.getTimeRangeGroup());
-		this.manipulation.set(rangeGroup, ePackage.getTimeRangeGroup_Name(), name);
+	public TemporalContext addTemporalContext(String name) throws ModelManipulationException {
+		Schedule schedule = securityPolicy.getAuthorizationPolicy().getSchedule();
+		TemporalContext rangeGroup = (TemporalContext) this.manipulation.createChild(schedule, ePackage.getSchedule_TemporalContexts(), ePackage.getTemporalContext());
+		this.manipulation.set(rangeGroup, ePackage.getTemporalContext_Name(), name);
 		return rangeGroup;
 	}
 
-	public void removeTimeRangeGroup(TimeRangeGroup group) throws ModelManipulationException {
+	public void removeTemporalContext(TemporalContext group) throws ModelManipulationException {
 		manipulation.remove(group);
 	}
 
-	public TimeRange addTimeRange(TimeRangeGroup rangeGroup, DaySchedule daySchedule, String rangeName, IntegerInterval interval) throws ModelManipulationException {
+	public TimeRange addTemporalContextInstance(TemporalContext rangeGroup, DaySchedule daySchedule, String rangeName, IntegerInterval interval) throws ModelManipulationException {
 		//System.out.println("TimeRange " + rangeName + " created!");
 		TimeRange timeRange = (TimeRange) this.manipulation.createChild(rangeGroup,
-				ePackage.getTimeRangeGroup_TimeRanges(), ePackage.getTimeRange());
+				ePackage.getTemporalContext_Instances(), ePackage.getTimeRange());
 		this.manipulation.set(timeRange, ePackage.getTimeRange_Name(), rangeName);
 		this.manipulation.set(timeRange, ePackage.getTimeRange_Start(), interval.getStart());
 		this.manipulation.set(timeRange, ePackage.getTimeRange_End(), interval.getEnd());
@@ -113,21 +117,16 @@ public class PolicyModifier {
 		return timeRange;
 	}
 
-	public void removeTimeRange(TimeRange timeRange) throws ModelManipulationException {
-//		List<DayScheduleTimeRange> list = new ArrayList<>(range.getSchedulerange());
-//		for(DayScheduleTimeRange sr: list) {
-//			manipulation.remove(sr, ePackage.getDayScheduleTimeRange_Range(), range);
-//		}
-//		manipulation.remove(range.getDayschedule(), ePackage.getDaySchedule_Ranges(), range);
+	public void removeTemporalContextInstance(TimeRange timeRange) throws ModelManipulationException {
 		manipulation.remove(timeRange);
 	}
 
 	public DayScheduleTimeRange addDayScheduleTimeRange(DaySchedule daySchedule, String name, IntegerInterval interval) throws ModelManipulationException {
 		DayScheduleTimeRange scheduleTimeRange = (DayScheduleTimeRange) manipulation.createChild(daySchedule,
-				ePackage.getDaySchedule_DayScheduleTimeRanges(), ePackage.getDayScheduleTimeRange());
-		manipulation.set(scheduleTimeRange, ePackage.getDayScheduleTimeRange_Name(), name);
-		manipulation.set(scheduleTimeRange, ePackage.getDayScheduleTimeRange_Start(), interval.getStart());
-		manipulation.set(scheduleTimeRange, ePackage.getDayScheduleTimeRange_End(), interval.getEnd());
+				ePackage.getDaySchedule_Instances(), ePackage.getDayScheduleTimeRange());
+		manipulation.set(scheduleTimeRange, ePackage.getTimeRange_Name(), name);
+		manipulation.set(scheduleTimeRange, ePackage.getTimeRange_Start(), interval.getStart());
+		manipulation.set(scheduleTimeRange, ePackage.getTimeRange_End(), interval.getEnd());
 		return scheduleTimeRange;
 	}
 
@@ -136,7 +135,7 @@ public class PolicyModifier {
 	}
 
 	public DayOfWeekSchedule addDayOfWeekSchedule(String name) throws ModelManipulationException {
-		Schedule schedule = policy.getSchedule();
+		Schedule schedule = securityPolicy.getAuthorizationPolicy().getSchedule();
 		DayOfWeekSchedule weekdaySchedule = (DayOfWeekSchedule) this.manipulation.createChild(schedule,
 				ePackage.getSchedule_DaySchedules(), ePackage.getDayOfWeekSchedule());
 		this.manipulation.set(weekdaySchedule, ePackage.getDaySchedule_Name(), name);
@@ -148,7 +147,7 @@ public class PolicyModifier {
 	}
 
 	public DayOfMonthSchedule addDayOfMonthSchedule(String name) throws ModelManipulationException {
-		Schedule schedule = policy.getSchedule();
+		Schedule schedule = securityPolicy.getAuthorizationPolicy().getSchedule();
 		DayOfMonthSchedule yeardaySchedule = (DayOfMonthSchedule) this.manipulation.createChild(schedule,
 				ePackage.getSchedule_DaySchedules(), ePackage.getDayOfMonthSchedule());
 		this.manipulation.set(yeardaySchedule, ePackage.getDaySchedule_Name(), name);
@@ -160,7 +159,7 @@ public class PolicyModifier {
 	}
 
 	public DayOfYearSchedule addDayOfYearSchedule(DayOfWeekSchedule weekSchedule, DayOfMonthSchedule monthSchedule, String name) throws ModelManipulationException {
-		Schedule schedule = policy.getSchedule();
+		Schedule schedule = securityPolicy.getAuthorizationPolicy().getSchedule();
 		DayOfYearSchedule yearSchedule = (DayOfYearSchedule) manipulation.createChild(schedule,
 				ePackage.getSchedule_DaySchedules(), ePackage.getDayOfYearSchedule());
 		this.manipulation.set(yearSchedule, ePackage.getDayOfYearSchedule_DayOfWeekSchedule(), weekSchedule);
@@ -169,27 +168,47 @@ public class PolicyModifier {
 		return yearSchedule;
 	}
 
-
 	public void removeDayOfYearSchedule(DayOfYearSchedule schedule) throws ModelManipulationException {
 		manipulation.remove(schedule);
 	}
 
-	public PeriodicEvent addPeriodicEvent(TimeRangeGroup time, String name, Role role, Demarcation demarcation, boolean enable, int priority) throws ModelManipulationException {
-		Schedule schedule = policy.getSchedule();
-		PeriodicEvent event = (PeriodicEvent) manipulation.createChild(schedule, ePackage.getSchedule_Periodicevent(), ePackage.getPeriodicEvent());
-		manipulation.addTo(event, ePackage.getPeriodicEvent_TimeRangeGroups(), time);
-		manipulation.set(event, ePackage.getPeriodicEvent_Name(), name);
-		manipulation.set(event, ePackage.getPeriodicEvent_Role(), role);
-		manipulation.set(event, ePackage.getPeriodicEvent_Demarcation(), demarcation);
-		manipulation.set(event, ePackage.getPeriodicEvent_Enable(), enable);
-		manipulation.set(event, ePackage.getPeriodicEvent_Priority(), priority);
-		return event;
+	public TemporalGrantRule addTemporalGrantRule(TemporalContext time, String name, Role role, Demarcation demarcation, boolean enable, int priority) throws ModelManipulationException {
+		Schedule schedule = securityPolicy.getAuthorizationPolicy().getSchedule();
+		TemporalGrantRule rule = (TemporalGrantRule) manipulation.createChild(schedule, ePackage.getSchedule_TemporalGrantRules(), ePackage.getTemporalGrantRule());
+		manipulation.set(rule, ePackage.getTemporalGrantRule_TemporalContext(), time);
+		manipulation.set(rule, ePackage.getTemporalGrantRule_Name(), name);
+		manipulation.set(rule, ePackage.getTemporalGrantRule_Role(), role);
+		manipulation.set(rule, ePackage.getTemporalGrantRule_Demarcation(), demarcation);
+		manipulation.set(rule, ePackage.getTemporalGrantRule_Enable(), enable);
+		manipulation.set(rule, ePackage.getTemporalGrantRule_Priority(), priority);
+		return rule;
 	}
 
-	public void removePeriodicEvent(PeriodicEvent event) throws ModelManipulationException {
-		manipulation.remove(event);
+	public void removeTemporalGrantRule(TemporalGrantRule rule) throws ModelManipulationException {
+		manipulation.remove(rule);
 	}
 
+	public Building addBuilding(String name) throws ModelManipulationException {
+		Building building = (Building) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_Buildings(), ePackage.getBuilding());
+		manipulation.set(building, ePackage.getBuilding_Name(), name);
+		return building;
+	}
+
+	public void removeBuilding(Building building) throws ModelManipulationException {
+		manipulation.remove(building);
+	}
+
+	public SecurityZone addSecurityZone(Building building, String name, boolean publicZone) throws ModelManipulationException {
+		SecurityZone zone = (SecurityZone) manipulation.createChild(building, ePackage.getBuilding_Securityzones(),
+				ePackage.getSecurityZone());
+		manipulation.set(zone, ePackage.getObject_Name(), name);
+		manipulation.set(zone, ePackage.getSecurityZone_Public(), publicZone);
+		return zone;
+	}
+
+	public void removeSecurityZone(SecurityZone securityZone) throws ModelManipulationException {
+		manipulation.remove(securityZone);
+	}
 	// -----------------------------------------------
 
 
@@ -235,6 +254,33 @@ public class PolicyModifier {
 		manipulation.remove(subdemarcation, ePackage.getDemarcation_Superdemarcations(), supdemarcation);
 	}
 
+	public void assignObjectToPermission(Permission permission, Object object) throws ModelManipulationException {
+		manipulation.set(permission, ePackage.getPermission_PO(), object);
+	}
+
+	public void deassignObjectFromPermission(Permission permission, Object object) throws ModelManipulationException {
+		manipulation.remove(permission, ePackage.getPermission_PO(), object);
+	}
+
+	public void setReachability(SecurityZone from, SecurityZone to) throws ModelManipulationException {
+		manipulation.addTo(from, ePackage.getSecurityZone_Reachable(), to);
+	}
+
+	public void setBidirectionalReachability(SecurityZone zone1, SecurityZone zone2) throws ModelManipulationException {
+		manipulation.addTo(zone1, ePackage.getSecurityZone_Reachable(), zone2);
+		manipulation.addTo(zone2, ePackage.getSecurityZone_Reachable(), zone1);
+
+	}
+
+	public void removeReachability(SecurityZone from, SecurityZone to) throws ModelManipulationException {
+		manipulation.remove(from, ePackage.getSecurityZone_Reachable(), to);
+	}
+
+	public void removeBidirectionalReachability(SecurityZone zone1, SecurityZone zone2) throws ModelManipulationException {
+		manipulation.remove(zone1, ePackage.getSecurityZone_Reachable(), zone2);
+		manipulation.remove(zone2, ePackage.getSecurityZone_Reachable(), zone1);
+
+	}
 	// -------------------------------------------
 
 

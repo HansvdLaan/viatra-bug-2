@@ -2,6 +2,7 @@ package com.vanderhighway.trbac.core.modifier;
 
 import com.brein.time.timeintervals.indexes.IntervalTree;
 import com.brein.time.timeintervals.intervals.IntegerInterval;
+import com.vanderhighway.trbac.aggregators.Scenario;
 import com.vanderhighway.trbac.core.modifier.PolicyModifier;
 import com.vanderhighway.trbac.model.trbac.model.*;
 import com.vanderhighway.trbac.patterns.RangeP;
@@ -27,8 +28,8 @@ public class IntervalUtil {
     // ---------- Process the adding/removing of ranges ----------
     
     public static void processAddRange(PolicyModifier modifier, IntervalTree tree, RangeP.Match match) throws ModelManipulationException {
-        System.out.println("Process AddRange called with:" + match.toString());
-            TimeRange timeRange = match.getTimeRange();
+        //System.out.println("Process AddRange called with:" + match.toString());
+            TimeRange timeRange = match.getInstance();
             IntegerInterval rangeInterval = new IntegerInterval(timeRange.getStart(), timeRange.getEnd());
             List<IntegerInterval> overlaps = tree.overlap(rangeInterval).stream().map(x -> (IntegerInterval) x).collect(toList());
             DaySchedule daySchedule = timeRange.getDaySchedule();
@@ -38,7 +39,7 @@ public class IntervalUtil {
                 IntegerInterval overlap = overlaps.get(0);
                 // interval and overlap are equal
                 if (timeRange.getStart() == overlap.getStart() && timeRange.getEnd() == overlap.getEnd()) {
-                    addRangeReference(modifier, daySchedule, overlap, match.getTimeRange());
+                    addRangeReference(modifier, daySchedule, overlap, match.getInstance());
                 }
                 //no overlapping bounds and interval proper subset of overlap
                 else if (timeRange.getStart() > overlap.getStart() && timeRange.getEnd() < overlap.getEnd()) {
@@ -54,7 +55,7 @@ public class IntervalUtil {
                     IntegerInterval newDayScheduleTimeRangeInterval = new IntegerInterval(timeRange.getStart(), timeRange.getEnd());
                     addDayScheduleTimeRange(modifier, tree, daySchedule, "somename", newDayScheduleTimeRangeInterval);
                     copyAllRangeReferences(modifier, daySchedule, resizedOverlap, newDayScheduleTimeRangeInterval);
-                    addRangeReference(modifier, daySchedule, newDayScheduleTimeRangeInterval, match.getTimeRange());
+                    addRangeReference(modifier, daySchedule, newDayScheduleTimeRangeInterval, match.getInstance());
 
                     updateNextDayScheduleTimeRange(modifier, daySchedule, resizedOverlap, newDayScheduleTimeRangeInterval);
                 }
@@ -66,7 +67,7 @@ public class IntervalUtil {
                     IntegerInterval newDayScheduleTimeRangeInterval = new IntegerInterval(timeRange.getStart(), timeRange.getEnd());
                     addDayScheduleTimeRange(modifier, tree, daySchedule, "somename", newDayScheduleTimeRangeInterval);
                     copyAllRangeReferences(modifier, daySchedule, resizedOverlap, newDayScheduleTimeRangeInterval);
-                    addRangeReference(modifier, daySchedule, newDayScheduleTimeRangeInterval, match.getTimeRange());
+                    addRangeReference(modifier, daySchedule, newDayScheduleTimeRangeInterval, match.getInstance());
 
                     updatePreviousDayScheduleTimeRange(modifier, daySchedule, resizedOverlap, newDayScheduleTimeRangeInterval);
                 }
@@ -78,7 +79,7 @@ public class IntervalUtil {
                     IntegerInterval newDayScheduleTimeRangeInterval = new IntegerInterval(timeRange.getStart(), timeRange.getEnd());
                     addDayScheduleTimeRange(modifier, tree, daySchedule, "somename", newDayScheduleTimeRangeInterval);
                     copyAllRangeReferences(modifier, daySchedule, resizedOverlap, newDayScheduleTimeRangeInterval);
-                    addRangeReference(modifier, daySchedule, newDayScheduleTimeRangeInterval, match.getTimeRange());
+                    addRangeReference(modifier, daySchedule, newDayScheduleTimeRangeInterval, match.getInstance());
 
                     updateNextDayScheduleTimeRange(modifier, daySchedule, resizedOverlap, newDayScheduleTimeRangeInterval);
                 } else {
@@ -93,7 +94,7 @@ public class IntervalUtil {
                         IntegerInterval newDayScheduleTimeRangeInterval = new IntegerInterval(timeRange.getStart(), overlap.getEnd());
                         addDayScheduleTimeRange(modifier, tree, daySchedule, "somename", newDayScheduleTimeRangeInterval);
                         copyAllRangeReferences(modifier, daySchedule, resizedOverlap, newDayScheduleTimeRangeInterval);
-                        addRangeReference(modifier, daySchedule, newDayScheduleTimeRangeInterval, match.getTimeRange());
+                        addRangeReference(modifier, daySchedule, newDayScheduleTimeRangeInterval, match.getInstance());
 
                         updateNextDayScheduleTimeRange(modifier, daySchedule, resizedOverlap, newDayScheduleTimeRangeInterval);
                     }
@@ -104,12 +105,12 @@ public class IntervalUtil {
                         IntegerInterval newDayScheduleTimeRangeInterval = new IntegerInterval(overlap.getStart(), timeRange.getEnd());
                         addDayScheduleTimeRange(modifier, tree, daySchedule, "somename", newDayScheduleTimeRangeInterval);
                         copyAllRangeReferences(modifier, daySchedule, resizedOverlap, newDayScheduleTimeRangeInterval);
-                        addRangeReference(modifier, daySchedule, newDayScheduleTimeRangeInterval, match.getTimeRange());
+                        addRangeReference(modifier, daySchedule, newDayScheduleTimeRangeInterval, match.getInstance());
 
                         updatePreviousDayScheduleTimeRange(modifier, daySchedule, resizedOverlap, newDayScheduleTimeRangeInterval);
                     }
                     else {
-                        addRangeReference(modifier, daySchedule, overlap, match.getTimeRange());
+                        addRangeReference(modifier, daySchedule, overlap, match.getInstance());
                     }
                 }
             }
@@ -118,29 +119,29 @@ public class IntervalUtil {
     public static void processRemoveRange(PolicyModifier modifier, IntervalTree tree,
                                                           RangeP.Match match) throws ModelManipulationException{
         System.out.println("Process RemoveRange called with:" + match.toString());
-        EList<DayScheduleTimeRange> DayScheduleTimeRanges = match.getTimeRange().getDayScheduleTimeRanges();
+        EList<DayScheduleTimeRange> DayScheduleTimeRanges = match.getInstance().getDayScheduleTimeRanges();
         ECollections.sort(DayScheduleTimeRanges, new DayScheduleTimeRangeComperator()); //Note: regular Collections.sort can not be used! see: https://www.eclipse.org/forums/index.php?t=msg&th=127964/
 
         DaySchedule daySchedule = match.getDaySchedule();
 
         DayScheduleTimeRange first = DayScheduleTimeRanges.get(0);
         DayScheduleTimeRange last = DayScheduleTimeRanges.get(DayScheduleTimeRanges.size() - 1);
-        modifier.getManipulation().remove(first, ePackage.getDayScheduleTimeRange_TimeRanges(), match.getTimeRange());
-        if(first.getPrevious() != null && containSameRanges(first.getTimeRanges(), first.getPrevious().getTimeRanges())) {
+        modifier.getManipulation().remove(first, ePackage.getDayScheduleTimeRange_TemporalContextTimeRanges(), match.getInstance());
+        if(first.getPrevious() != null && containSameRanges(first.getTemporalContextTimeRanges(), first.getPrevious().getTemporalContextTimeRanges())) {
             mergeDayScheduleTimeRanges(modifier, tree, daySchedule, first.getPrevious(), first);
         }
 
 
-        modifier.getManipulation().remove(last, ePackage.getDayScheduleTimeRange_TimeRanges(), match.getTimeRange());
-        if(last.getNext() != null && containSameRanges(last.getTimeRanges(), last.getNext().getTimeRanges())) {
+        modifier.getManipulation().remove(last, ePackage.getDayScheduleTimeRange_TemporalContextTimeRanges(), match.getInstance());
+        if(last.getNext() != null && containSameRanges(last.getTemporalContextTimeRanges(), last.getNext().getTemporalContextTimeRanges())) {
             mergeDayScheduleTimeRanges(modifier, tree, daySchedule, last, last.getNext());
         }
 
-        List<DayScheduleTimeRange> list = new ArrayList<>(match.getTimeRange().getDayScheduleTimeRanges());
+        List<DayScheduleTimeRange> list = new ArrayList<>(match.getInstance().getDayScheduleTimeRanges());
 		for(DayScheduleTimeRange sr: list) {
-			modifier.getManipulation().remove(sr, ePackage.getDayScheduleTimeRange_TimeRanges(), match.getTimeRange());
+			modifier.getManipulation().remove(sr, ePackage.getDayScheduleTimeRange_TemporalContextTimeRanges(), match.getInstance());
 		}
-		modifier.getManipulation().remove(daySchedule, ePackage.getDayScheduleTimeRange_TimeRanges(), match.getTimeRange());
+		modifier.getManipulation().remove(daySchedule, ePackage.getDayScheduleTimeRange_TemporalContextTimeRanges(), match.getInstance());
     }
 
     // ----------------------------------------------------------
@@ -152,14 +153,14 @@ public class IntervalUtil {
     private static void addRangeReference(PolicyModifier modifier, DaySchedule daySchedule,
                                                              IntegerInterval DayScheduleTimeRange, TimeRange timeRange) throws ModelManipulationException {
         DayScheduleTimeRange sr = findDayScheduleTimeRangeByDayScheduleAndInterval(daySchedule, DayScheduleTimeRange);
-        modifier.manipulation.addTo(sr, ePackage.getDayScheduleTimeRange_TimeRanges(), timeRange);
+        modifier.manipulation.addTo(sr, ePackage.getDayScheduleTimeRange_TemporalContextTimeRanges(), timeRange);
     }
 
     private static void copyAllRangeReferences(PolicyModifier modifier, DaySchedule daySchedule, IntegerInterval from, IntegerInterval to) throws ModelManipulationException {
         DayScheduleTimeRange DayScheduleTimeRangeFrom = findDayScheduleTimeRangeByDayScheduleAndInterval(daySchedule, from);
         DayScheduleTimeRange DayScheduleTimeRangeTo = findDayScheduleTimeRangeByDayScheduleAndInterval(daySchedule, to);
-        for (TimeRange timeRange : DayScheduleTimeRangeFrom.getTimeRanges()) {
-            modifier.manipulation.addTo(DayScheduleTimeRangeTo, ePackage.getDayScheduleTimeRange_TimeRanges(), timeRange);
+        for (TimeRange timeRange : DayScheduleTimeRangeFrom.getTemporalContextTimeRanges()) {
+            modifier.manipulation.addTo(DayScheduleTimeRangeTo, ePackage.getDayScheduleTimeRange_TemporalContextTimeRanges(), timeRange);
         }
     }
 
@@ -171,10 +172,10 @@ public class IntervalUtil {
 
     public static DayScheduleTimeRange addDayScheduleTimeRange(PolicyModifier modifier, IntervalTree tree, DaySchedule daySchedule, String name, IntegerInterval interval) throws ModelManipulationException {
         //System.out.println("add " + interval.toString() );
-        DayScheduleTimeRange sr = (com.vanderhighway.trbac.model.trbac.model.DayScheduleTimeRange) modifier.getManipulation().createChild(daySchedule, ePackage.getDaySchedule_DayScheduleTimeRanges(), ePackage.getDayScheduleTimeRange());
-        modifier.getManipulation().set(sr, ePackage.getDayScheduleTimeRange_Name(), name);
-        modifier.getManipulation().set(sr, ePackage.getDayScheduleTimeRange_Start(), interval.getStart());
-        modifier.getManipulation().set(sr, ePackage.getDayScheduleTimeRange_End(), interval.getEnd());
+        DayScheduleTimeRange sr = (com.vanderhighway.trbac.model.trbac.model.DayScheduleTimeRange) modifier.getManipulation().createChild(daySchedule, ePackage.getDaySchedule_Instances(), ePackage.getDayScheduleTimeRange());
+        modifier.getManipulation().set(sr, ePackage.getTimeRange_Name(), name);
+        modifier.getManipulation().set(sr, ePackage.getTimeRange_Start(), interval.getStart());
+        modifier.getManipulation().set(sr, ePackage.getTimeRange_End(), interval.getEnd());
         tree.add(interval);
         return sr;
     }
@@ -182,8 +183,8 @@ public class IntervalUtil {
     private static void resizeDayScheduleTimeRange(PolicyModifier modifier, IntervalTree tree, DaySchedule daySchedule, IntegerInterval originalInterval, IntegerInterval newInterval) throws ModelManipulationException {
         //System.out.println("resize " + originalInterval.toString() + " to " + newInterval  );
         DayScheduleTimeRange sr =  findDayScheduleTimeRangeByDayScheduleAndInterval(daySchedule, originalInterval);
-        modifier.getManipulation().set(sr, ePackage.getDayScheduleTimeRange_Start(), newInterval.getStart());
-        modifier.getManipulation().set(sr, ePackage.getDayScheduleTimeRange_End(), newInterval.getEnd());
+        modifier.getManipulation().set(sr, ePackage.getTimeRange_Start(), newInterval.getStart());
+        modifier.getManipulation().set(sr, ePackage.getTimeRange_End(), newInterval.getEnd());
         tree.remove(originalInterval);
         tree.add(newInterval);
     }
@@ -197,8 +198,8 @@ public class IntervalUtil {
 
     private static void removeDayScheduleTimeRange(PolicyModifier modifier, IntervalTree tree, DaySchedule daySchedule, IntegerInterval interval) throws ModelManipulationException {
         DayScheduleTimeRange sr = findDayScheduleTimeRangeByDayScheduleAndInterval(daySchedule, interval);
-        modifier.getManipulation().remove(daySchedule, ePackage.getDaySchedule_DayScheduleTimeRanges(), sr);
-        modifier.getManipulation().remove(sr, ePackage.getDayScheduleTimeRange_TimeRanges());
+        modifier.getManipulation().remove(daySchedule, ePackage.getDaySchedule_Instances(), sr);
+        modifier.getManipulation().remove(sr, ePackage.getDayScheduleTimeRange_TemporalContextTimeRanges());
         modifier.getManipulation().remove(sr);
         tree.remove(interval);
     }
@@ -258,7 +259,7 @@ public class IntervalUtil {
     // ---------- Find Ranges / Schedule Ranges ----------
 
     public static DayScheduleTimeRange findDayScheduleTimeRangeByDayScheduleAndInterval(DaySchedule daySchedule, IntegerInterval interval) {
-        for(DayScheduleTimeRange sr: daySchedule.getDayScheduleTimeRanges()) {
+        for(DayScheduleTimeRange sr: daySchedule.getInstances()) {
             if(interval.getStart() == sr.getStart() && interval.getEnd() == sr.getEnd()) {
                 return sr;
             }
@@ -266,14 +267,14 @@ public class IntervalUtil {
         return null;
     }
 
-    public static TimeRange findRangeByRangeGroupAndDayScheduleAndName(TimeRangeGroup group, DaySchedule daySchedule, String name) {
-        for(TimeRange timeRange : group.getTimeRanges()) {
-            if(name.equals(timeRange.getName()) && daySchedule.getTimeRanges().contains(timeRange)) {
-                return timeRange;
-            }
-        }
-        return null;
-    }
+//    public static TimeRange findRangeByRangeGroupAndDayScheduleAndName(Scenario group, DaySchedule daySchedule, String name) {
+//        for(TimeRange timeRange : group()) {
+//            if(name.equals(timeRange.getName()) && daySchedule.getTimeRanges().contains(timeRange)) {
+//                return timeRange;
+//            }
+//        }
+//        return null;
+//    }
 
     // ---------------------------------------------------
 

@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
 
-public class PolicyValidatorCLI {
+public class PolicyValidatorCLIOld {
 //	public static void main(String[] args) throws IOException {
 //
 //		//Debug output

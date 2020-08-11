@@ -11,7 +11,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<emf.version>2.10.1.v20140901-1043</emf.version>
-		<viatra.version>2.3.2</viatra.version>
+		<viatra.version>2.4.0</viatra.version>
 		<xtend.version>2.21.0</xtend.version>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
@@ -41,7 +41,12 @@
 		</repository>
 		<repository>
 			<id>repo.eclipse.org.viatra</id>
-			<url>https://repo.eclipse.org/content/repositories/viatra-snapshots/</url>
+			<url>https://repo.eclipse.org/content/repositories/viatra-releases/</url>
+		</repository>
+		<repository>
+			<id>my-repo1</id>
+			<name>maven central</name>
+			<url>https://repo1.maven.org/maven2/</url>
 		</repository>
 	</repositories>
 	
@@ -53,6 +58,13 @@
 				<enabled>true</enabled>
 			</snapshots>
 			<url>https://repo.eclipse.org/content/repositories/viatra-snapshots/</url>
+		</pluginRepository>
+		<pluginRepository>
+			<id>maven-plugin</id>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+			<url>https://repo.maven.apache.org/maven2/org/apache/maven/plugins/</url>
 		</pluginRepository>
 	</pluginRepositories>
 

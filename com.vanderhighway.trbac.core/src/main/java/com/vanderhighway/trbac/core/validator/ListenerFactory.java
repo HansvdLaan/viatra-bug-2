@@ -1,6 +1,7 @@
 package com.vanderhighway.trbac.core.validator;
 
-import com.vanderhighway.trbac.model.trbac.model.TimeRangeGroup;
+import com.vanderhighway.trbac.aggregators.Scenario;
+import com.vanderhighway.trbac.model.trbac.model.TemporalContext;
 import com.vanderhighway.trbac.patterns.*;
 import org.eclipse.viatra.query.runtime.api.IMatchUpdateListener;
 
@@ -21,8 +22,6 @@ public class ListenerFactory {
 		updateListeners.add(getOnlyOneOperationsManagerUpdateListener());
 		updateListeners.add(getSoDEmployeeAndContractorUpdateListener());
 		updateListeners.add(getSoDEmployeeAndVisitorUpdateListener());
-		//updateListeners.add(getPrerequisiteEveryHasAccessToLobbyUpdateListener());
-		//updateListeners.add(getPrerequisiteVaultImpliesOpenOfficeUpdateListener());
 		updateListeners.add(getAccessRelationUpdateListener());
 		return updateListeners;
 	}
@@ -196,7 +195,7 @@ public class ListenerFactory {
 		return new IMatchUpdateListener<AccessRelation.Match>() {
 			@Override
 			public void notifyAppearance(AccessRelation.Match match) {
-				Set<TimeRangeGroup> groups = (Set<TimeRangeGroup>) match.getGroups();
+				Set<TemporalContext> groups = match.getScenario();
 				Set<String> groupNames = groups.stream().map(x -> x.getName()).collect(Collectors.toSet());
 				String userName = match.getUser().getName();
 				String permissionName = match.getPermission().getName();
@@ -205,8 +204,11 @@ public class ListenerFactory {
 
 			@Override
 			public void notifyDisappearance(AccessRelation.Match match) {
-				System.out.printf("[REM AccessRelation Match] %s %n", match.prettyPrint());
-
+				Set<TemporalContext> groups = match.getScenario();
+				Set<String> groupNames = groups.stream().map(x -> x.getName()).collect(Collectors.toSet());
+				String userName = match.getUser().getName();
+				String permissionName = match.getPermission().getName();
+				System.out.println("[ADD AccessRelation Match] " + userName + " has permission " + permissionName + " during " + groupNames);
 			}
 		};
 	}
@@ -256,24 +258,24 @@ public class ListenerFactory {
 		};
 	}
 
-//	public static IMatchUpdateListener<TimeRangeGroupCollection.Match> getTimeRangeGroupCombinationsUpdateListener() {
-//		return new IMatchUpdateListener<TimeRangeGroupCollection.Match>() {
-//			@Override
-//			public void notifyAppearance(TimeRangeGroupCollection.Match match) {
-//				Set<TimeRangeGroup> groups = (Set<TimeRangeGroup>) match.getGroups();
-//				Set<String> groupNames = groups.stream().map(x -> x.getName()).collect(Collectors.toSet());
-//				System.out.printf("[ADD TimeRangeGroupCombinations Match] %s %n", groupNames);
-//			}
-//
-//			@Override
-//			public void notifyDisappearance(TimeRangeGroupCollection.Match match) {
-//				Set<TimeRangeGroup> groups = (Set<TimeRangeGroup>) match.getGroups();
-//				Set<String> groupNames = groups.stream().map(x -> x.getName()).collect(Collectors.toSet());
-//				System.out.printf("[REM TimeRangeGroupCombinations Match] %s %n", groupNames);
-//			}
-//		};
-//	}
-//
+	public static IMatchUpdateListener<Scenarios.Match> getScenarioUpdateListener() {
+		return new IMatchUpdateListener<Scenarios.Match>() {
+			@Override
+			public void notifyAppearance(Scenarios.Match match) {
+				Set<TemporalContext> contexts =  match.getScenario();
+				Set<String> contextNames = contexts.stream().map(x -> x.getName()).collect(Collectors.toSet());
+				System.out.printf("[ADD Scenarios Match] %s %n", contextNames);
+			}
+
+			@Override
+			public void notifyDisappearance(Scenarios.Match match) {
+				Set<TemporalContext> contexts = match.getScenario();
+				Set<String> contextNames = contexts.stream().map(x -> x.getName()).collect(Collectors.toSet());
+				System.out.printf("[REM Scenarios Match] %s %n", contextNames);
+			}
+		};
+	}
+
 //	public static IMatchUpdateListener<TimeRangeGroupCollectionHasGroup.Match> getTimeRangeGroupCollectionHasGroupUpdateListener() {
 //		return new IMatchUpdateListener<TimeRangeGroupCollectionHasGroup.Match>() {
 //			@Override
@@ -294,24 +296,78 @@ public class ListenerFactory {
 //		};
 //	}
 //
-	public static IMatchUpdateListener<TimeRangeGroupCollectionEnabled.Match> getTimeRangeGroupCollectionEnabledUpdateListener() {
-		return new IMatchUpdateListener<TimeRangeGroupCollectionEnabled.Match>() {
+	public static IMatchUpdateListener<RSD.Match> getRDSUpdateListener() {
+		return new IMatchUpdateListener<RSD.Match>() {
 			@Override
-			public void notifyAppearance(TimeRangeGroupCollectionEnabled.Match match) {
-				Set<TimeRangeGroup> groups = (Set<TimeRangeGroup>) match.getGroups();
-				Set<String> groupNames = groups.stream().map(x -> x.getName()).collect(Collectors.toSet());
+			public void notifyAppearance(RSD.Match match) {
+				Set<TemporalContext> scenario = match.getScenario();
+				Set<String> temporalContextNames = scenario.stream().map(x -> x.getName()).collect(Collectors.toSet());
 				String roleName = match.getRole().getName();
 				String demarcationName = match.getDemarcation().getName();
-				System.out.println("[ADD TimeRangeGroupCollectionEnabled Match] " + groupNames + " -> " + roleName + "-" + demarcationName);
+				System.out.println("[ADD RSD Match] " + temporalContextNames + " -> " + roleName + "-" + demarcationName);
 			}
 
 			@Override
-			public void notifyDisappearance(TimeRangeGroupCollectionEnabled.Match match) {
-				Set<TimeRangeGroup> groups = (Set<TimeRangeGroup>) match.getGroups();
-				Set<String> groupNames = groups.stream().map(x -> x.getName()).collect(Collectors.toSet());
+			public void notifyDisappearance(RSD.Match match) {
+				Set<TemporalContext> scenario = match.getScenario();
+				Set<String> temporalContextNames = scenario.stream().map(x -> x.getName()).collect(Collectors.toSet());
 				String roleName = match.getRole().getName();
 				String demarcationName = match.getDemarcation().getName();
-				System.out.println("[ADD TimeRangeGroupCollectionEnabled Match]" + groupNames + " -> " + roleName + "-" + demarcationName);
+				System.out.println("[REM RSD Match]" + temporalContextNames + " -> " + roleName + "-" + demarcationName);
+			}
+		};
+	}
+
+	public static IMatchUpdateListener<Reachable.Match> getReachableUpdateListener() {
+		return new IMatchUpdateListener<Reachable.Match>() {
+			@Override
+			public void notifyAppearance(Reachable.Match match) {
+				System.out.println("[ADD Reachable Match] " + match.getBuilding().getName() + ":" + match.getZone().getName());
+			}
+
+			@Override
+			public void notifyDisappearance(Reachable.Match match) {
+				System.out.println("[REM Reachable Match]" + match.getBuilding().getName() + ":" + match.getZone().getName());
+			}
+		};
+	}
+
+	public static IMatchUpdateListener<ReachableAccess.Match> getReachableAccessUpdateListener() {
+		return new IMatchUpdateListener<ReachableAccess.Match>() {
+			@Override
+			public void notifyAppearance(ReachableAccess.Match match) {
+				Set<TemporalContext> scenario = match.getScenario();
+				Set<String> temporalContextNames = scenario.stream().map(x -> x.getName()).collect(Collectors.toSet());
+				System.out.println("[ADD ReachableAccess Match] " + match.getUser().getName()
+						+ " - " + match.getZone().getName() + " during " + temporalContextNames);
+			}
+
+			@Override
+			public void notifyDisappearance(ReachableAccess.Match match) {
+				Set<TemporalContext> scenario = match.getScenario();
+				Set<String> temporalContextNames = scenario.stream().map(x -> x.getName()).collect(Collectors.toSet());
+				System.out.println("[REMOVE ReachableAccess Match] " + match.getUser().getName()
+						+ " - " + match.getZone().getName() + " during " + temporalContextNames);
+			}
+		};
+	}
+
+	public static IMatchUpdateListener<UnreachableAccess.Match> getUnreachableAccessUpdateListener() {
+		return new IMatchUpdateListener<UnreachableAccess.Match>() {
+			@Override
+			public void notifyAppearance(UnreachableAccess.Match match) {
+				Set<TemporalContext> scenario = match.getScenario();
+				Set<String> temporalContextNames = scenario.stream().map(x -> x.getName()).collect(Collectors.toSet());
+				System.out.println("[ADD UnreachableAccess Match] " + match.getUser().getName()
+						+ " - " + match.getZone().getName() + " during " + temporalContextNames);
+			}
+
+			@Override
+			public void notifyDisappearance(UnreachableAccess.Match match) {
+				Set<TemporalContext> scenario = match.getScenario();
+				Set<String> temporalContextNames = scenario.stream().map(x -> x.getName()).collect(Collectors.toSet());
+				System.out.println("[REMOVE UnreachableAccess Match] " + match.getUser().getName()
+						+ " - " + match.getZone().getName() + " during " + temporalContextNames);
 			}
 		};
 	}
