@@ -2,6 +2,7 @@ package picocli.shell.jline3.example;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Spinner implements Runnable{
 
@@ -10,9 +11,12 @@ public class Spinner implements Runnable{
     private volatile LocalDateTime stopTime;
     private String message;
 
+    ReentrantLock lock = new ReentrantLock();
+
     public Spinner(String message) {
         this.message = message;
     }
+
     @Override
     public void run() {
         this.startTime = LocalDateTime.now();
@@ -21,6 +25,7 @@ public class Spinner implements Runnable{
         System.out.printf("|");
         int i = 0;
         while (!stop){
+            lock.lock();
             try {
                 Thread.sleep(150);
             } catch (InterruptedException e) {
@@ -28,12 +33,15 @@ public class Spinner implements Runnable{
             }
             System.out.printf("%s", spinner[i % spinner.length]);
             i++;
+            lock.unlock();
         }
     }
 
     public void stop() {
         this.stopTime =  LocalDateTime.now();
         this.stop = true;
+        lock.lock();
         System.out.printf("\u0008 Done! (" + (startTime.until(stopTime, ChronoUnit.SECONDS)) + " sec)\n");
+        lock.unlock();
     }
 }

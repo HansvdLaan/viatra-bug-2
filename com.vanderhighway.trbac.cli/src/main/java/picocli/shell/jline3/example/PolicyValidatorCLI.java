@@ -2,6 +2,7 @@ package picocli.shell.jline3.example;
 
 import com.brein.time.timeintervals.intervals.IntegerInterval;
 import com.vanderhighway.trbac.aggregators.Scenario;
+import com.vanderhighway.trbac.core.CoreUtils;
 import com.vanderhighway.trbac.core.modifier.PolicyAutomaticModifier;
 import com.vanderhighway.trbac.core.modifier.PolicyModifier;
 import com.vanderhighway.trbac.core.validator.PolicyValidator;
@@ -45,6 +46,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -229,7 +233,12 @@ public class PolicyValidatorCLI {
                     "                      |___/                                     ");
             System.out.println("version 0.0.1");
 
-            Spinner fileLoadSpinner = new Spinner("Loading Policy Model... ");
+            //URI uri = URI.createFileURI("models/basic/intervals.trbac");
+            //URI uri = URI.createFileURI("empty_policy_all_schedules.trbac");
+            //URI uri = URI.createFileURI("empty_policy_trebla.trbac");
+            URI uri = URI.createFileURI("simple_company.trbac");
+
+            Spinner fileLoadSpinner = new Spinner("Loading Policy Model... (" + uri.toString() + ") ");
             new Thread(fileLoadSpinner).start();
 
             // Initializing the EMF package
@@ -238,12 +247,15 @@ public class PolicyValidatorCLI {
             Resource.Factory.Registry.INSTANCE.getContentTypeToFactoryMap().put("*", new XMIResourceFactoryImpl());
 
             ResourceSet set = new ResourceSetImpl();
-            //URI uri = URI.createFileURI("models/basic/intervals.trbac");
-            //URI uri = URI.createFileURI("empty_policy_all_schedules.trbac");
-            URI uri = URI.createFileURI("simple_company.trbac");
             Resource resource = set.getResource(uri, true);
 
             fileLoadSpinner.stop();
+
+            Spinner xSpinner = new Spinner("Adding Missing Schedules and Temporal Context Instances... ");
+            new Thread(xSpinner).start();
+            CoreUtils coteUtils = new CoreUtils();
+            coteUtils.addMissingDaySchedules(resource, (SecurityPolicy) resource.getContents().get(0), "2020-01-01", "2030-01-01");
+            xSpinner.stop();
 
             Spinner queryEngineSpinner = new Spinner("Initializing Query Engine... ");
             new Thread(queryEngineSpinner).start();
@@ -263,6 +275,7 @@ public class PolicyValidatorCLI {
             new Thread(modelModifiersSpinner).start();
 
             PolicyModifier modifier = new PolicyModifier(engine, (SecurityPolicy) resource.getContents().get(0), resource);
+            modifier.setInstanceIDCounter(coteUtils.getInstanceIDCounter());
             CLIContainer.getInstance().setModifier(modifier);
             PolicyAutomaticModifier automaticModifier = new PolicyAutomaticModifier(engine, modifier, (SecurityPolicy) resource.getContents().get(0));
             CLIContainer.getInstance().setAutomaticModifier(automaticModifier);
@@ -272,15 +285,15 @@ public class PolicyValidatorCLI {
 
             modelModifiersSpinner.stop();
 
-            System.out.println("Initializing Policy Validator... ");
-            //Spinner checkerSpinner = new Spinner("Initializing Policy Validator... ");
-            //new Thread(checkerSpinner).start();
+            //System.out.println("Initializing Policy Validator... ");
+            Spinner checkerSpinner = new Spinner("Initializing Policy Validator... ");
+            new Thread(checkerSpinner).start();
 
             PolicyValidator validator = new PolicyValidator(engine);
             validator.addChangeListeners(engine, false);
             CLIContainer.getInstance().setValidator(validator);
 
-            //checkerSpinner.stop();
+            checkerSpinner.stop();
             System.out.printf("\u0008");
 
             System.out.println("Policy Validator fully initialized! Please enter a command. ");
@@ -331,7 +344,7 @@ public class PolicyValidatorCLI {
         }
     }
 
-    @Command(name = "add", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+    @Command(name = "add", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class, AddCommand.Constraint.class},
             description = "add a model entity")
     static class AddCommand implements Runnable {
 
@@ -389,12 +402,17 @@ public class PolicyValidatorCLI {
                                              @Option(names = {"-day"}, required = true) String dayScheduleName,
                                              @Option(names = {"-start"}, required = true) String startTime,
                                              @Option(names = {"-end"}, required = true) String endTime
-                                             ) throws ModelManipulationException {
+                                             ) throws ModelManipulationException, ParseException {
             TemporalContext context = (TemporalContext) CLIContainer.getInstance().getModel().getEObject(temporalContextName);
+            if(context == null) {System.out.println("Unkown temporal context: " + context); return;}
+
+            if(dayScheduleName.split("_").length == 3) {
+                dayScheduleName = addDayToDateString(dayScheduleName);
+            }
             DaySchedule daySchedule = (DaySchedule) CLIContainer.getInstance().getModel().getEObject(dayScheduleName);
-            CLIContainer.getInstance().getModifier().addTemporalContextInstance(context, daySchedule,
-                    CLIContainer.getInstance().generateUniqueTemporalContextID(context, daySchedule),
-                    new IntegerInterval(toMinutes(startTime), toMinutes(endTime)));
+
+            CLIContainer.getInstance().getModifier().addTemporalContextInstance(context, daySchedule, new IntegerInterval(toMinutes(startTime), toMinutes(endTime)));
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
@@ -416,6 +434,136 @@ public class PolicyValidatorCLI {
                 CLIContainer.getInstance().getModifier().addTemporalGrantRule(context, ruleName, role, demarcation, false, priority);
             } else {
                 System.out.println("Command should either be \"grant\" or \"revoke\", not" + commandName);
+            }
+        }
+
+        @Command(name="constraint", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Add an authorization constraint")
+        public static class Constraint implements Runnable {
+
+            @Override
+            public void run() {
+
+            }
+
+            @Command( mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                    description = "Add a Separation of Duty on the level of Users / Roles")
+            public void SoDUR(@Option(names = {"-name"}, required = true) String name,
+                                @Option(names = {"-role1"}, required = true) String role1Name,
+                                @Option(names = {"-role2"}, required = true) String role2Name) throws ModelManipulationException {
+                Role role1 = (Role) CLIContainer.getInstance().getModel().getEObject(role1Name);
+                Role role2 = (Role) CLIContainer.getInstance().getModel().getEObject(role2Name);
+                CLIContainer.getInstance().getModifier().addSoDURConstraint(name, role1, role2);
+            }
+
+            @Command( mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                    description = "Add a Separation of Duty on the level of Users / Demarcations ")
+            public void SoDUD(@Option(names = {"-name"}, required = true) String name,
+                              @Option(names = {"-dem1"}, required = true) String demarcation1Name,
+                              @Option(names = {"-dem2"}, required = true) String demarcation2Name) throws ModelManipulationException {
+                Demarcation dem1 = (Demarcation) CLIContainer.getInstance().getModel().getEObject(demarcation1Name);
+                Demarcation dem2 = (Demarcation) CLIContainer.getInstance().getModel().getEObject(demarcation2Name);
+                CLIContainer.getInstance().getModifier().addSoDUDConstraint(name, dem1, dem2);
+            }
+
+            @Command( mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                    description = "Add a Separation of Duty on the level of Users / Permissions ")
+            public void SoDUP(@Option(names = {"-name"}, required = true) String name,
+                              @Option(names = {"-perm1"}, required = true) String permission1Name,
+                              @Option(names = {"-perm2"}, required = true) String permission2Name) throws ModelManipulationException {
+                Permission perm1 = (Permission) CLIContainer.getInstance().getModel().getEObject(permission1Name);
+                Permission perm2 = (Permission) CLIContainer.getInstance().getModel().getEObject(permission2Name);
+                CLIContainer.getInstance().getModifier().addSoDUPConstraint(name, perm1, perm2);
+            }
+
+            @Command( mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                    description = "Add a Separation of Duty on the level of Roles / Demarcations")
+            public void SoDRD(@Option(names = {"-name"}, required = true) String name,
+                              @Option(names = {"-dem1"}, required = true) String demarcation1Name,
+                              @Option(names = {"-dem2"}, required = true) String demarcation2Name) throws ModelManipulationException {
+                Demarcation dem1 = (Demarcation) CLIContainer.getInstance().getModel().getEObject(demarcation1Name);
+                Demarcation dem2 = (Demarcation) CLIContainer.getInstance().getModel().getEObject(demarcation2Name);
+                CLIContainer.getInstance().getModifier().addSoDRDConstraint(name, dem1, dem2);
+            }
+
+            @Command( mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                    description = "Add a Separation of Duty on the level of Roles / Permissions")
+            public void SoDRP(@Option(names = {"-name"}, required = true) String name,
+                              @Option(names = {"-perm1"}, required = true) String permission1Name,
+                              @Option(names = {"-perm2"}, required = true) String permission2Name) throws ModelManipulationException {
+                Permission perm1 = (Permission) CLIContainer.getInstance().getModel().getEObject(permission1Name);
+                Permission perm2 = (Permission) CLIContainer.getInstance().getModel().getEObject(permission2Name);
+                CLIContainer.getInstance().getModifier().addSoDRPConstraint(name, perm1, perm2);
+            }
+
+            @Command( mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                    description = "Add a Separation of Duty on the level of Demarcations / Permissions")
+            public void SoDDP(@Option(names = {"-name"}, required = true) String name,
+                              @Option(names = {"-perm1"}, required = true) String permission1Name,
+                              @Option(names = {"-perm2"}, required = true) String permission2Name) throws ModelManipulationException {
+                Permission perm1 = (Permission) CLIContainer.getInstance().getModel().getEObject(permission1Name);
+                Permission perm2 = (Permission) CLIContainer.getInstance().getModel().getEObject(permission2Name);
+                CLIContainer.getInstance().getModifier().addSoDDPConstraint(name, perm1, perm2);
+            }
+
+            @Command( mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                    description = "Add a prerequisite on the level of Users / Roles")
+            public void PreReqUR(@Option(names = {"-name"}, required = true) String name,
+                              @Option(names = {"-role1"}, required = true) String role1Name,
+                              @Option(names = {"-role2"}, required = true) String role2Name) throws ModelManipulationException {
+                Role role1 = (Role) CLIContainer.getInstance().getModel().getEObject(role1Name);
+                Role role2 = (Role) CLIContainer.getInstance().getModel().getEObject(role2Name);
+                CLIContainer.getInstance().getModifier().addPrerequisiteURConstraint(name, role1, role2);
+            }
+
+            @Command( mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                    description = "Add a prerequisite on the level of Users / Demarcations ")
+            public void PreReqUD(@Option(names = {"-name"}, required = true) String name,
+                              @Option(names = {"-dem1"}, required = true) String demarcation1Name,
+                              @Option(names = {"-dem2"}, required = true) String demarcation2Name) throws ModelManipulationException {
+                Demarcation dem1 = (Demarcation) CLIContainer.getInstance().getModel().getEObject(demarcation1Name);
+                Demarcation dem2 = (Demarcation) CLIContainer.getInstance().getModel().getEObject(demarcation2Name);
+                CLIContainer.getInstance().getModifier().addPrerequisiteUDConstraint(name, dem1, dem2);
+            }
+
+            @Command( mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                    description = "Add a prerequisite on the level of Users / Permissions ")
+            public void PreReqUP(@Option(names = {"-name"}, required = true) String name,
+                              @Option(names = {"-perm1"}, required = true) String permission1Name,
+                              @Option(names = {"-perm2"}, required = true) String permission2Name) throws ModelManipulationException {
+                Permission perm1 = (Permission) CLIContainer.getInstance().getModel().getEObject(permission1Name);
+                Permission perm2 = (Permission) CLIContainer.getInstance().getModel().getEObject(permission2Name);
+                CLIContainer.getInstance().getModifier().addPrerequisiteUPConstraint(name, perm1, perm2);
+            }
+
+            @Command( mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                    description = "Add a prerequisite on the level of Roles / Demarcations")
+            public void PreReqRD(@Option(names = {"-name"}, required = true) String name,
+                              @Option(names = {"-dem1"}, required = true) String demarcation1Name,
+                              @Option(names = {"-dem2"}, required = true) String demarcation2Name) throws ModelManipulationException {
+                Demarcation dem1 = (Demarcation) CLIContainer.getInstance().getModel().getEObject(demarcation1Name);
+                Demarcation dem2 = (Demarcation) CLIContainer.getInstance().getModel().getEObject(demarcation2Name);
+                CLIContainer.getInstance().getModifier().addPrerequisiteRDConstraint(name, dem1, dem2);
+            }
+
+            @Command( mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                    description = "Add a prerequisite on the level of Roles / Permissions")
+            public void PreReqRP(@Option(names = {"-name"}, required = true) String name,
+                              @Option(names = {"-perm1"}, required = true) String permission1Name,
+                              @Option(names = {"-perm2"}, required = true) String permission2Name) throws ModelManipulationException {
+                Permission perm1 = (Permission) CLIContainer.getInstance().getModel().getEObject(permission1Name);
+                Permission perm2 = (Permission) CLIContainer.getInstance().getModel().getEObject(permission2Name);
+                CLIContainer.getInstance().getModifier().addPrerequisiteRPConstraint(name, perm1, perm2);
+            }
+
+            @Command( mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                    description = "Add a prerequisite on the level of Demarcations / Permissions")
+            public void PreReqDP(@Option(names = {"-name"}, required = true) String name,
+                              @Option(names = {"-perm1"}, required = true) String permission1Name,
+                              @Option(names = {"-perm2"}, required = true) String permission2Name) throws ModelManipulationException {
+                Permission perm1 = (Permission) CLIContainer.getInstance().getModel().getEObject(permission1Name);
+                Permission perm2 = (Permission) CLIContainer.getInstance().getModel().getEObject(permission2Name);
+                CLIContainer.getInstance().getModifier().addPrerequisiteDPConstraint(name, perm1, perm2);
             }
         }
     }
@@ -490,6 +638,13 @@ public class PolicyValidatorCLI {
             TemporalGrantRule rule = (TemporalGrantRule) CLIContainer.getInstance().getModel().getEObject(name);
             CLIContainer.getInstance().getModifier().removeTemporalGrantRule(rule);
         }
+
+        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Remove a temporal grant rule")
+        public void constraint(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+            AuthorizationConstraint constraint = (AuthorizationConstraint) CLIContainer.getInstance().getModel().getEObject(name);
+            CLIContainer.getInstance().getModifier().removeAuthorizationConstraint(constraint);
+        }
     }
 
     @Command(name = "assign", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
@@ -556,7 +711,6 @@ public class PolicyValidatorCLI {
             Demarcation subDemarcation = (Demarcation) CLIContainer.getInstance().getModel().getEObject(subDemarcationName);
             Demarcation supDemarcation = (Demarcation) CLIContainer.getInstance().getModel().getEObject(supDemarcationName);
             CLIContainer.getInstance().getModifier().addDemarcationInheritance(subDemarcation, supDemarcation);
-
         }
     }
 
@@ -637,18 +791,12 @@ public class PolicyValidatorCLI {
         @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all basic entities and relations (Users, Roles, Demarcations, Permissions, UR, DP)")
         public void basic() throws ModelManipulationException {
-            System.out.print("Users:");
             users();
-            System.out.print("Roles:");
             roles();
-            System.out.print("Demarcations:");
-            demarcations();
-            System.out.print("Permissions:");
-            permissions();
-            System.out.println("DP:");
-            DP();
-            System.out.println("UR:");
             UR();
+            demarcations();
+            permissions();
+            DP();
         }
 
         @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
@@ -681,7 +829,10 @@ public class PolicyValidatorCLI {
             SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
             List<String> users = policy.getAuthorizationPolicy().getUsers().stream().map(x -> x.getName()).collect(Collectors.toList());
             Collections.sort(users);
-            System.out.println(users);
+            System.out.println("Users:");
+            for(String user: users) {
+                System.out.println("\t" + user);
+            }
         }
 
         @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
@@ -696,8 +847,9 @@ public class PolicyValidatorCLI {
                 }
             }
             List<String> sortedUserNames = UR.keySet().stream().sorted().collect(Collectors.toList());
+            System.out.println("UR:");
             for(String userName: sortedUserNames) {
-                System.out.println(userName + "->" + UR.get(userName).stream().sorted().collect(Collectors.toList()));
+                System.out.println("\t" + userName + "->" + UR.get(userName).stream().sorted().collect(Collectors.toList()));
             }
         }
 
@@ -707,7 +859,10 @@ public class PolicyValidatorCLI {
             SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
             List<String> roles = policy.getAuthorizationPolicy().getRoles().stream().map(PolicyValidatorCLI::rolePrettyString).
                     sorted().collect(Collectors.toList());
-            System.out.println(roles);
+            System.out.println("Roles:");
+            for (String role: roles) {
+                System.out.println("\t" + role);
+            }
         }
 
         @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
@@ -722,8 +877,9 @@ public class PolicyValidatorCLI {
                 }
             }
             List<String> sortedDemarcationNames = DP.keySet().stream().sorted().collect(Collectors.toList());
+            System.out.println("DP:");
             for(String demarcationName: sortedDemarcationNames) {
-                System.out.println(demarcationName + "->" + DP.get(demarcationName).stream().sorted().collect(Collectors.toList()));
+                System.out.println("\t" + demarcationName + "->" + DP.get(demarcationName).stream().sorted().collect(Collectors.toList()));
             }
         }
 
@@ -731,9 +887,13 @@ public class PolicyValidatorCLI {
                 description = "Show all demarcations")
         public void demarcations() throws ModelManipulationException {
             SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
-            List<String> demarcations = policy.getAuthorizationPolicy().getDemarcations().stream().map(x -> x.getName()).collect(Collectors.toList());
+            List<String> demarcations = policy.getAuthorizationPolicy().getDemarcations().stream().map(PolicyValidatorCLI::demarcationPrettyString)
+                    .collect(Collectors.toList());
             Collections.sort(demarcations);
-            System.out.println(demarcations);
+            System.out.println("Demarcations:");
+            for(String demarcationName: demarcations) {
+                System.out.println("\t" + demarcationName);
+            }
         }
 
         @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
@@ -742,7 +902,10 @@ public class PolicyValidatorCLI {
             SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
             List<String> permissions = policy.getAuthorizationPolicy().getPermissions().stream().map(x -> x.getName()).collect(Collectors.toList());
             Collections.sort(permissions);
-            System.out.println(permissions);
+            System.out.println("Permissions:");
+            for(String permission: permissions) {
+                System.out.println("\t" + permission);
+            }
         }
 
         @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
@@ -777,29 +940,38 @@ public class PolicyValidatorCLI {
 
         @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all computed scenarios")
-        public void scenarios( @Option(names = {"-example"},
-                description = "Show an example instance.",
-                required = false) boolean example) {
-            Set<Scenarios.Match> matches = CLIContainer.getInstance().getEngine().getMatcher(Scenarios.instance()).getAllMatches().stream().collect(Collectors.toSet());
-            List<String> groups = new LinkedList<>();
-            for (Scenarios.Match match: matches){
-                List<String> groupNamesList = match.getScenario().stream().map(x -> x.getName()).collect(Collectors.toList());
-                Collections.sort(groupNamesList);
-                String groupNames = groupNamesList.toString();
-
-                // Please forgive me, for I have written horrible code.
-                if(example) {
-                    groupNames += " (ex: " + dateScheduleTimeRange_To_TimeRangeGroupCombinationMatchPrettyString(
-                            getExampleDateScheduleTimeRange(match.getScenario())
-                    ) + " )";
+        public void scenarios( @Option(names = {"-example"}, description = "Show an example instance.", required = false) boolean example,
+                @Option(names = {"-date"}, description = "Show all scenarios for a specific date", required = false) String dateString) throws ParseException {
+            if(dateString == null) {
+                Set<Scenarios.Match> matches = CLIContainer.getInstance().getEngine().getMatcher(Scenarios.instance()).getAllMatches().stream().collect(Collectors.toSet());
+                List<String> groups = new LinkedList<>();
+                for (Scenarios.Match match : matches) {
+                    String scenarioString = scenarioPrettyString(match.getScenario());
+                    // Please forgive me, for I have written horrible code.
+                    if (example) {
+                        scenarioString += " (ex: " + dateScheduleTimeRange_To_TimeRangeGroupCombinationMatchPrettyString(
+                                getExampleDateScheduleTimeRange(match.getScenario())
+                        ) + ")";
+                    }
+                    groups.add(scenarioString);
                 }
 
-                groups.add(groupNames);
-            }
-
-            Collections.sort(groups);
-            for(String group: groups) {
-                System.out.println(group);
+                Collections.sort(groups);
+                for (String group : groups) {
+                    System.out.println(group);
+                }
+            } else {
+                if (dateString.split("_").length == 3) {
+                    dateString = addDayToDateString(dateString);
+                }
+                DayOfYearSchedule schedule = (DayOfYearSchedule) CLIContainer.getInstance().getModel().getEObject(dateString);
+                DateScheduleTimeRange_To_Scenario.Match partialMatch = DateScheduleTimeRange_To_Scenario.Matcher.create().newMatch(schedule, null, null, null);
+                DateScheduleTimeRange_To_Scenario.Matcher matcher = CLIContainer.getInstance().getEngine().getMatcher(DateScheduleTimeRange_To_Scenario.instance());
+                List<DateScheduleTimeRange_To_Scenario.Match> matches = matcher.getAllMatches(partialMatch).stream().sorted((m1, m2) -> m1.getStarttime().compareTo(m2.getStarttime())).collect(Collectors.toList());
+                for (DateScheduleTimeRange_To_Scenario.Match match : matches) {
+                    System.out.println( "[" + fromMinutesToHHmm(match.getStarttime()) + "-" + fromMinutesToHHmm(match.getEndtime()) + "]"
+                            + " " + scenarioPrettyString(match.getScenario()));
+                }
             }
         }
 
@@ -827,7 +999,7 @@ public class PolicyValidatorCLI {
                 instanceCount = 5;
             }
             for(TemporalContext context: temporalContexts) {
-                System.out.println(context + "->" +
+                System.out.println(context.getName() + "->" +
                     context.getInstances().stream().limit(instanceCount)
                             .map(PolicyValidatorCLI::timeRangePrettyString).collect(Collectors.toList())
                 );
@@ -848,6 +1020,18 @@ public class PolicyValidatorCLI {
                         + rule.getDemarcation().getName() + " during " + rule.getTemporalContext().getName() + " with priority " + rule.getPriority());
             }
         }
+
+        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Show all constraints")
+        public void constraints() {
+            SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
+            List<AuthorizationConstraint> authorizationConstraints = policy.getAuthorizationConstraints().stream().sorted(
+                    Comparator.comparing(AuthorizationConstraint::getName)
+            ).collect(Collectors.toList());
+            for (AuthorizationConstraint constraint: authorizationConstraints) {
+                System.out.println(constraint.getName() + ": " + ConstraintHelper.toString(constraint));
+            }
+        }
     }
 
 
@@ -856,7 +1040,7 @@ public class PolicyValidatorCLI {
         if(role.getJuniors().size() > 0) {
             List<String> juniors = role.getJuniors().stream().map(x -> x.getName()).collect(Collectors.toList());
             Collections.sort(juniors);
-            prettyString += " (inherits " + juniors + " )";
+            prettyString += " (inherits " + juniors + ")";
         }
         return prettyString;
     }
@@ -866,8 +1050,15 @@ public class PolicyValidatorCLI {
         if(demarcation.getSubdemarcations().size() > 0) {
             List<String> juniors = demarcation.getSubdemarcations().stream().map(x -> x.getName()).collect(Collectors.toList());
             Collections.sort(juniors);
-            prettyString += " (subs: " + juniors + " )";
+            prettyString += " (subs: " + juniors + ")";
         }
+        return prettyString;
+    }
+
+    public static String scenarioPrettyString(Scenario scenario) {
+        List<String> contextList = scenario.stream().map(x -> x.getName()).collect(Collectors.toList());
+        Collections.sort(contextList);
+        String prettyString = contextList.toString();
         return prettyString;
     }
 
@@ -886,6 +1077,15 @@ public class PolicyValidatorCLI {
         return match.<DateScheduleTimeRange_To_Scenario.Match>map(value -> match.get()).orElse(null);
     }
 
+    public static String addDayToDateString(String dateString) throws ParseException {
+        Calendar cal = Calendar.getInstance();
+        DateFormat format = new SimpleDateFormat("d_MMMM_yyyy", Locale.ENGLISH);
+        cal.setTime(format.parse(dateString));
+        int day = cal.get(Calendar.DAY_OF_WEEK);
+        String newDateString = Arrays.asList("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday").get(day - 1);
+        newDateString = newDateString + "_" + dateString;
+        return newDateString;
+    }
     public static int toMinutes(String time) {
         return (int) ChronoUnit.MINUTES.between(LocalTime.MIDNIGHT, LocalTime.parse(time));
     }

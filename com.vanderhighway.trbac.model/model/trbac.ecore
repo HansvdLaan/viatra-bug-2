@@ -1,22 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="trbac" nsURI="https://vanderhighway.com/trbac/2020" nsPrefix="trbac">
-  <eClassifiers xsi:type="ecore:EClass" name="AuthorizationPolicy">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="users" upperBound="-1"
-        eType="#//User" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="roles" upperBound="-1"
-        eType="#//Role" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="demarcations" upperBound="-1"
-        eType="#//Demarcation" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="permissions" upperBound="-1"
-        eType="#//Permission" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
-        iD="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="schedule" eType="#//Schedule"
-        containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="test" upperBound="-1" eType="#//Test"
-        containment="true"/>
-  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="User">
     <eStructuralFeatures xsi:type="ecore:EReference" name="UR" upperBound="-1" eType="#//Role"
         eOpposite="#//Role/RU"/>
@@ -85,6 +69,8 @@
         eType="#//TemporalContext" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="temporalGrantRules" upperBound="-1"
         eType="#//TemporalGrantRule" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="startDate" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//String"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="endDate" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//String"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="DayOfWeekSchedule" eSuperTypes="#//DaySchedule">
     <eStructuralFeatures xsi:type="ecore:EReference" name="DayOfYearSchedules" upperBound="-1"
@@ -135,10 +121,12 @@
   <eClassifiers xsi:type="ecore:EClass" name="SecurityPolicy">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
         iD="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="authorizationPolicy" eType="#//AuthorizationPolicy"
-        containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="buildings" upperBound="-1"
         eType="#//Building" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="authorizationConstraints"
+        upperBound="-1" eType="#//AuthorizationConstraint" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="authorizationPolicy" eType="#//AuthorizationPolicy"
+        containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Building">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
@@ -151,5 +139,63 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="reachable" upperBound="-1"
         eType="#//SecurityZone"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="Test"/>
+  <eClassifiers xsi:type="ecore:EClass" name="AuthorizationConstraint">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Name"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="UnaryUserConstraint" eSuperTypes="#//AuthorizationConstraint">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="user" eType="#//User"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="BinaryUserConstraint" eSuperTypes="#//AuthorizationConstraint">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="left" eType="#//User"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="right" eType="#//User"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="UnaryRoleConstraint" eSuperTypes="#//AuthorizationConstraint">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="role" eType="#//Role"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="BinaryRoleConstraint" eSuperTypes="#//AuthorizationConstraint">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="left" eType="#//Role"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="right" eType="#//Role"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="UnaryDemarcationConstraint" eSuperTypes="#//AuthorizationConstraint">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="demarcation" eType="#//Demarcation"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="BinaryDemarcationConstraint" eSuperTypes="#//AuthorizationConstraint">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="left" eType="#//Demarcation"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="right" eType="#//Demarcation"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="UnaryPermissionConstraint" eSuperTypes="#//AuthorizationConstraint">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="permission" eType="#//Permission"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="BinaryPermissionConstraint" eSuperTypes="#//AuthorizationConstraint">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="left" eType="#//Permission"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="right" eType="#//Permission"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SoDURConstraint" eSuperTypes="#//BinaryRoleConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="SoDUDConstraint" eSuperTypes="#//BinaryDemarcationConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="SoDUPConstraint" eSuperTypes="#//BinaryPermissionConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="SoDRDConstraint" eSuperTypes="#//BinaryDemarcationConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="SoDRPConstraint" eSuperTypes="#//BinaryPermissionConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="SoDDPConstraint" eSuperTypes="#//BinaryPermissionConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="AuthorizationPolicy">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="users" upperBound="-1"
+        eType="#//User" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="roles" upperBound="-1"
+        eType="#//Role" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="demarcations" upperBound="-1"
+        eType="#//Demarcation" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="permissions" upperBound="-1"
+        eType="#//Permission" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="objects" upperBound="-1"
+        eType="#//Object" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="schedule" eType="#//Schedule"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+        iD="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="PrerequisiteURConstraint" eSuperTypes="#//BinaryRoleConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="PrerequisiteUDConstraint" eSuperTypes="#//BinaryDemarcationConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="PrerequisiteUPConstraint" eSuperTypes="#//BinaryPermissionConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="PrerequisiteRDConstraint" eSuperTypes="#//BinaryDemarcationConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="PrerequisiteRPConstraint" eSuperTypes="#//BinaryPermissionConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="PrerequisiteDPConstraint" eSuperTypes="#//BinaryPermissionConstraint"/>
 </ecore:EPackage>

@@ -2,6 +2,7 @@ package com.vanderhighway.trbac.core.validator;
 
 import com.brein.time.timeintervals.indexes.IntervalTree;
 import com.brein.time.timeintervals.intervals.IntegerInterval;
+import com.vanderhighway.trbac.model.trbac.model.PrerequisiteURConstraint;
 import com.vanderhighway.trbac.patterns.*;
 import org.apache.log4j.Logger;
 import org.eclipse.emf.ecore.EObject;
@@ -81,6 +82,22 @@ public class PolicyValidator {
         engine.addMatchUpdateListener(UnreachableAccess.Matcher.on(engine), ListenerFactory.getUnreachableAccessUpdateListener(), fireNow);
 
         engine.addMatchUpdateListener(Scenarios.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getScenarioUpdateListener(), fireNow);
+
+        engine.addMatchUpdateListener(SoDURPattern.Matcher.on(engine), ListenerFactory.getSoDURPatternUpdateListener(), fireNow);
+        engine.addMatchUpdateListener(SoDUDPattern.Matcher.on(engine), ListenerFactory.getSoDUDPatternUpdateListener(), fireNow);
+        engine.addMatchUpdateListener(SoDUPPattern.Matcher.on(engine), ListenerFactory.getSoDUPPatternUpdateListener(), fireNow);
+        engine.addMatchUpdateListener(SoDRDPattern.Matcher.on(engine), ListenerFactory.getSoDRDPatternUpdateListener(), fireNow);
+        engine.addMatchUpdateListener(SoDRPPattern.Matcher.on(engine), ListenerFactory.getSoDRPPatternUpdateListener(), fireNow);
+        engine.addMatchUpdateListener(SoDDPPattern.Matcher.on(engine), ListenerFactory.getSoDDPPatternUpdateListener(), fireNow);
+
+        //TODO: fix spelling
+        engine.addMatchUpdateListener(PrerequisteURPattern.Matcher.on(engine), ListenerFactory.getPrerequisiteURPatternUpdateListener(), fireNow);
+        engine.addMatchUpdateListener(PrerequisiteUDPattern.Matcher.on(engine), ListenerFactory.getPrerequisiteUDPatternUpdateListener(), fireNow);
+        engine.addMatchUpdateListener(PrerequisiteUPPattern.Matcher.on(engine), ListenerFactory.getPrerequisiteUPPatternUpdateListener(), fireNow);
+        engine.addMatchUpdateListener(PrerequisiteRDPattern.Matcher.on(engine), ListenerFactory.getPrerequisiteRDPatternUpdateListener(), fireNow);
+        engine.addMatchUpdateListener(PrerequisiteRPPattern.Matcher.on(engine), ListenerFactory.getPrerequisiteRPPatternUpdateListener(), fireNow);
+        engine.addMatchUpdateListener(PrerequisiteDPPattern.Matcher.on(engine), ListenerFactory.getPrerequisiteDPPatternUpdateListener(), fireNow);
+
     }
 
 }

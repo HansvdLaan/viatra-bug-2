@@ -16,6 +16,11 @@ import org.eclipse.viatra.transformation.runtime.emf.transformation.batch.BatchT
 import org.eclipse.xtext.xbase.lib.Extension;
 
 import java.lang.reflect.InvocationTargetException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 public class PolicyModifier {
@@ -41,11 +46,15 @@ public class PolicyModifier {
 	private SecurityPolicy securityPolicy;
 	private Resource resource;
 
+	// Map used to give a unique ID to instances;
+	private HashMap<String, Integer> instanceIDCounter;
+
 	public PolicyModifier(final AdvancedViatraQueryEngine engine, SecurityPolicy securityPolicy, Resource resource) {
 		this.engine = engine;
 		this.manipulation = new SimpleModelManipulations(this.engine);
 		this.securityPolicy = securityPolicy;
 		this.resource = resource;
+		this.instanceIDCounter = new HashMap<>();
 		//this.transformation = BatchTransformation.forEngine(this.engine).build();
 	}
 
@@ -97,20 +106,19 @@ public class PolicyModifier {
 
 	public TemporalContext addTemporalContext(String name) throws ModelManipulationException {
 		Schedule schedule = securityPolicy.getAuthorizationPolicy().getSchedule();
-		TemporalContext rangeGroup = (TemporalContext) this.manipulation.createChild(schedule, ePackage.getSchedule_TemporalContexts(), ePackage.getTemporalContext());
-		this.manipulation.set(rangeGroup, ePackage.getTemporalContext_Name(), name);
-		return rangeGroup;
+		TemporalContext context = (TemporalContext) this.manipulation.createChild(schedule, ePackage.getSchedule_TemporalContexts(), ePackage.getTemporalContext());
+		this.manipulation.set(context, ePackage.getTemporalContext_Name(), name);
+		return context;
 	}
 
 	public void removeTemporalContext(TemporalContext group) throws ModelManipulationException {
 		manipulation.remove(group);
 	}
 
-	public TimeRange addTemporalContextInstance(TemporalContext rangeGroup, DaySchedule daySchedule, String rangeName, IntegerInterval interval) throws ModelManipulationException {
-		//System.out.println("TimeRange " + rangeName + " created!");
-		TimeRange timeRange = (TimeRange) this.manipulation.createChild(rangeGroup,
+	public TimeRange addTemporalContextInstance(TemporalContext context, DaySchedule daySchedule, IntegerInterval interval) throws ModelManipulationException {
+		TimeRange timeRange = (TimeRange) this.manipulation.createChild(context,
 				ePackage.getTemporalContext_Instances(), ePackage.getTimeRange());
-		this.manipulation.set(timeRange, ePackage.getTimeRange_Name(), rangeName);
+		this.manipulation.set(timeRange, ePackage.getTimeRange_Name(), getUniqueID(context.getName() + "-" + daySchedule.getName()));
 		this.manipulation.set(timeRange, ePackage.getTimeRange_Start(), interval.getStart());
 		this.manipulation.set(timeRange, ePackage.getTimeRange_End(), interval.getEnd());
 		this.manipulation.set(timeRange, ePackage.getTimeRange_DaySchedule(), daySchedule);
@@ -121,10 +129,10 @@ public class PolicyModifier {
 		manipulation.remove(timeRange);
 	}
 
-	public DayScheduleTimeRange addDayScheduleTimeRange(DaySchedule daySchedule, String name, IntegerInterval interval) throws ModelManipulationException {
+	public DayScheduleTimeRange addDayScheduleTimeRange(DaySchedule daySchedule, IntegerInterval interval) throws ModelManipulationException {
 		DayScheduleTimeRange scheduleTimeRange = (DayScheduleTimeRange) manipulation.createChild(daySchedule,
 				ePackage.getDaySchedule_Instances(), ePackage.getDayScheduleTimeRange());
-		manipulation.set(scheduleTimeRange, ePackage.getTimeRange_Name(), name);
+		manipulation.set(scheduleTimeRange, ePackage.getTimeRange_Name(), getUniqueID(daySchedule.getName()));
 		manipulation.set(scheduleTimeRange, ePackage.getTimeRange_Start(), interval.getStart());
 		manipulation.set(scheduleTimeRange, ePackage.getTimeRange_End(), interval.getEnd());
 		return scheduleTimeRange;
@@ -283,6 +291,149 @@ public class PolicyModifier {
 	}
 	// -------------------------------------------
 
+	// ---------- Add / Remove SoD constraints ----------
+
+	public SoDURConstraint addSoDURConstraint(String name, Role role1, Role role2) throws ModelManipulationException {
+		SoDURConstraint constraint = (SoDURConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getSoDURConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryRoleConstraint_Left(), role1);
+		manipulation.set(constraint, ePackage.getBinaryRoleConstraint_Right(), role2);
+		return constraint;
+	}
+
+	public SoDUDConstraint addSoDUDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2) throws ModelManipulationException {
+		SoDUDConstraint constraint = (SoDUDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getSoDUDConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Left(), demarcation1);
+		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Right(), demarcation2);
+		return constraint;
+	}
+
+	public SoDUPConstraint addSoDUPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
+		SoDUPConstraint constraint = (SoDUPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getSoDUPConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Right(), permission2);
+		return constraint;
+	}
+
+	public SoDRDConstraint addSoDRDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2) throws ModelManipulationException {
+		SoDRDConstraint constraint = (SoDRDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getSoDRDConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Left(), demarcation1);
+		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Right(), demarcation2);
+		return constraint;
+	}
+
+	public SoDRPConstraint addSoDRPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
+		SoDRPConstraint constraint = (SoDRPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getSoDRPConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Right(), permission2);
+		return constraint;
+	}
+
+	public SoDDPConstraint addSoDDPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
+		SoDDPConstraint constraint = (SoDDPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getSoDDPConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Right(), permission2);
+		return constraint;
+	}
+
+	public PrerequisiteURConstraint addPrerequisiteURConstraint(String name, Role role1, Role role2) throws ModelManipulationException {
+		PrerequisiteURConstraint constraint = (PrerequisiteURConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getPrerequisiteURConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryRoleConstraint_Left(), role1);
+		manipulation.set(constraint, ePackage.getBinaryRoleConstraint_Right(), role2);
+		return constraint;
+	}
+
+	public PrerequisiteUDConstraint addPrerequisiteUDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2) throws ModelManipulationException {
+		PrerequisiteUDConstraint constraint = (PrerequisiteUDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getPrerequisiteUDConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Left(), demarcation1);
+		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Right(), demarcation2);
+		return constraint;
+	}
+
+	public PrerequisiteUPConstraint addPrerequisiteUPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
+		PrerequisiteUPConstraint constraint = (PrerequisiteUPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getPrerequisiteUPConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Right(), permission2);
+		return constraint;
+	}
+
+	public PrerequisiteRDConstraint addPrerequisiteRDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2) throws ModelManipulationException {
+		PrerequisiteRDConstraint constraint = (PrerequisiteRDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getPrerequisiteRDConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Left(), demarcation1);
+		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Right(), demarcation2);
+		return constraint;
+	}
+
+	public PrerequisiteRPConstraint addPrerequisiteRPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
+		PrerequisiteRPConstraint constraint = (PrerequisiteRPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getPrerequisiteRPConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Right(), permission2);
+		return constraint;
+	}
+
+	public PrerequisiteDPConstraint addPrerequisiteDPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
+		PrerequisiteDPConstraint constraint = (PrerequisiteDPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getPrerequisiteDPConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Right(), permission2);
+		return constraint;
+	}
+
+	public void removeAuthorizationConstraint(AuthorizationConstraint constraint) throws ModelManipulationException {
+		manipulation.remove(constraint, ePackage.getSecurityPolicy_AuthorizationConstraints(), constraint);
+	}
+
+	public SecurityPolicy getSecurityPolicy() {
+		return securityPolicy;
+	}
+
+	public Resource getResource() {
+		return resource;
+	}
+
+	public TRBACPackage getEPackage() {
+		return ePackage;
+	}
+
+	public AdvancedViatraQueryEngine getEngine() {
+		return engine;
+	}
+
+	public String getUniqueID(String key) {
+		this.instanceIDCounter.putIfAbsent(key, 0);
+		this.instanceIDCounter.put(key, this.instanceIDCounter.get(key) + 1);
+		return key + "-" + this.instanceIDCounter.get(key);
+	}
+
+	public HashMap<String, Integer> getInstanceIDCounter() {
+		return instanceIDCounter;
+	}
+
+	public void setInstanceIDCounter(HashMap<String, Integer> instanceIDCounter) {
+		this.instanceIDCounter = instanceIDCounter;
+	}
 
 	public void execute(BatchTransformationRule rule) {
 		this.transformation.getTransformationStatements().fireOne(rule);

@@ -1,6 +1,7 @@
 package com.vanderhighway.trbac.core.validator;
 
 import com.vanderhighway.trbac.aggregators.Scenario;
+import com.vanderhighway.trbac.model.trbac.model.SoDURConstraint;
 import com.vanderhighway.trbac.model.trbac.model.TemporalContext;
 import com.vanderhighway.trbac.patterns.*;
 import org.eclipse.viatra.query.runtime.api.IMatchUpdateListener;
@@ -351,7 +352,7 @@ public class ListenerFactory {
 			}
 		};
 	}
-
+	
 	public static IMatchUpdateListener<UnreachableAccess.Match> getUnreachableAccessUpdateListener() {
 		return new IMatchUpdateListener<UnreachableAccess.Match>() {
 			@Override
@@ -415,5 +416,174 @@ public class ListenerFactory {
 //			}
 //		};
 //	}
+
+	public static IMatchUpdateListener<SoDURPattern.Match> getSoDURPatternUpdateListener() {
+		return new IMatchUpdateListener<SoDURPattern.Match>() {
+			@Override
+			public void notifyAppearance(SoDURPattern.Match match) {
+				System.out.println("[ADD SoDURPattern Match] user " + match.getUser().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+
+			@Override
+			public void notifyDisappearance(SoDURPattern.Match match) {
+				System.out.println("[REMOVE SoDURPattern Match] user " + match.getUser().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+		};
+	}
+
+	public static IMatchUpdateListener<SoDUDPattern.Match> getSoDUDPatternUpdateListener() {
+		return new IMatchUpdateListener<SoDUDPattern.Match>() {
+			@Override
+			public void notifyAppearance(SoDUDPattern.Match match) {
+				System.out.println("[ADD SoDUDPattern Match] user " + match.getUser().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+
+			@Override
+			public void notifyDisappearance(SoDUDPattern.Match match) {
+				System.out.println("[REMOVE SoDUDPattern Match] user " + match.getUser().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+		};
+	}
+
+	public static IMatchUpdateListener<SoDUPPattern.Match> getSoDUPPatternUpdateListener() {
+		return new IMatchUpdateListener<SoDUPPattern.Match>() {
+			@Override
+			public void notifyAppearance(SoDUPPattern.Match match) {
+				System.out.println("[ADD SoDUPPattern Match] user " + match.getUser().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+
+			@Override
+			public void notifyDisappearance(SoDUPPattern.Match match) {
+				System.out.println("[REMOVE SoDUPPattern Match] user " + match.getUser().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+		};
+	}
+
+	public static IMatchUpdateListener<SoDRDPattern.Match> getSoDRDPatternUpdateListener() {
+		return new IMatchUpdateListener<SoDRDPattern.Match>() {
+			@Override
+			public void notifyAppearance(SoDRDPattern.Match match) {
+				System.out.println("[ADD SoDRDPattern Match] role " + match.getRole().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+
+			@Override
+			public void notifyDisappearance(SoDRDPattern.Match match) {
+				System.out.println("[REMOVE SoDRDPattern Match] role " + match.getRole().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+		};
+	}
+
+	public static IMatchUpdateListener<SoDRPPattern.Match> getSoDRPPatternUpdateListener() {
+		return new IMatchUpdateListener<SoDRPPattern.Match>() {
+			@Override
+			public void notifyAppearance(SoDRPPattern.Match match) {
+				System.out.println("[ADD SoDRPPattern Match] role " + match.getRole().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+
+			@Override
+			public void notifyDisappearance(SoDRPPattern.Match match) {
+				System.out.println("[REMOVE SoDRPPattern Match] role " + match.getRole().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+		};
+	}
+
+	public static IMatchUpdateListener<SoDDPPattern.Match> getSoDDPPatternUpdateListener() {
+		return new IMatchUpdateListener<SoDDPPattern.Match>() {
+			@Override
+			public void notifyAppearance(SoDDPPattern.Match match) {
+				System.out.println("[ADD SoDDPPattern Match] demarcation " + match.getDemarcation().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+
+			@Override
+			public void notifyDisappearance(SoDDPPattern.Match match) {
+				System.out.println("[REMOVE SoDDPPattern Match] demarcation " + match.getDemarcation().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+		};
+	}
+
+	public static IMatchUpdateListener<PrerequisteURPattern.Match> getPrerequisiteURPatternUpdateListener() {
+		return new IMatchUpdateListener<PrerequisteURPattern.Match>() {
+			@Override
+			public void notifyAppearance(PrerequisteURPattern.Match match) {
+				System.out.println("[ADD PrerequisiteURPattern Match] user " + match.getUser().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+
+			@Override
+			public void notifyDisappearance(PrerequisteURPattern.Match match) {
+				System.out.println("[REMOVE PrerequisiteURPattern Match] user " + match.getUser().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+		};
+	}
+
+	public static IMatchUpdateListener<PrerequisiteUDPattern.Match> getPrerequisiteUDPatternUpdateListener() {
+		return new IMatchUpdateListener<PrerequisiteUDPattern.Match>() {
+			@Override
+			public void notifyAppearance(PrerequisiteUDPattern.Match match) {
+				System.out.println("[ADD PrerequisiteUDPattern Match] user " + match.getUser().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+
+			@Override
+			public void notifyDisappearance(PrerequisiteUDPattern.Match match) {
+				System.out.println("[REMOVE PrerequisiteUDPattern Match] user " + match.getUser().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+		};
+	}
+
+	public static IMatchUpdateListener<PrerequisiteUPPattern.Match> getPrerequisiteUPPatternUpdateListener() {
+		return new IMatchUpdateListener<PrerequisiteUPPattern.Match>() {
+			@Override
+			public void notifyAppearance(PrerequisiteUPPattern.Match match) {
+				System.out.println("[ADD PrerequisiteUPPattern Match] user " + match.getUser().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+
+			@Override
+			public void notifyDisappearance(PrerequisiteUPPattern.Match match) {
+				System.out.println("[REMOVE PrerequisiteUPPattern Match] user " + match.getUser().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+		};
+	}
+
+	public static IMatchUpdateListener<PrerequisiteRDPattern.Match> getPrerequisiteRDPatternUpdateListener() {
+		return new IMatchUpdateListener<PrerequisiteRDPattern.Match>() {
+			@Override
+			public void notifyAppearance(PrerequisiteRDPattern.Match match) {
+				System.out.println("[ADD PrerequisiteRDPattern Match] role " + match.getRole().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+
+			@Override
+			public void notifyDisappearance(PrerequisiteRDPattern.Match match) {
+				System.out.println("[REMOVE PrerequisiteRDPattern Match] role " + match.getRole().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+		};
+	}
+
+	public static IMatchUpdateListener<PrerequisiteRPPattern.Match> getPrerequisiteRPPatternUpdateListener() {
+		return new IMatchUpdateListener<PrerequisiteRPPattern.Match>() {
+			@Override
+			public void notifyAppearance(PrerequisiteRPPattern.Match match) {
+				System.out.println("[ADD PrerequisiteRPPattern Match] role " + match.getRole().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+
+			@Override
+			public void notifyDisappearance(PrerequisiteRPPattern.Match match) {
+				System.out.println("[REMOVE PrerequisiteRPPattern Match] role " + match.getRole().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+		};
+	}
+
+	public static IMatchUpdateListener<PrerequisiteDPPattern.Match> getPrerequisiteDPPatternUpdateListener() {
+		return new IMatchUpdateListener<PrerequisiteDPPattern.Match>() {
+			@Override
+			public void notifyAppearance(PrerequisiteDPPattern.Match match) {
+				System.out.println("[ADD PrerequisiteDPPattern Match] demarcation " + match.getDemarcation().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+
+			@Override
+			public void notifyDisappearance(PrerequisiteDPPattern.Match match) {
+				System.out.println("[REMOVE PrerequisiteDPPattern Match] demarcation " + match.getDemarcation().getName() + " violates constraint " + match.getConstraint().getName());
+			}
+		};
+	}
+
 
 }

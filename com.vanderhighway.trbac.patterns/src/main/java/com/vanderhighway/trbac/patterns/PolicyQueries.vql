@@ -17,23 +17,22 @@ pattern roleName(role: Role, name : java String) {
 }
 
 // ----- Utility Patterns -----
-
-pattern allJuniors(senior: Role, junior: Role) {
-	Role.juniors+(senior, junior);
+pattern USD(user: User, scenario: java Scenario, demarcation:Demarcation) {
+	User.UR(user, role);
+	Role.juniors*(role, roleP);
+    find Scenarios(scenario);
+    find RSD(roleP, scenario, demarcation);
 }
 
-pattern allJuniorsIncludingSelf(senior: Role, junior: Role) {
-	Role.juniors*(senior, junior);
+pattern USP(user: User, scenario: java Scenario, permission:Permission) {
+	find accessRelation(user, scenario, permission);
 }
 
-pattern allSubdemarcations(supdemarcation: Demarcation, subdemarcation: Demarcation) {
-	Demarcation.subdemarcations+(supdemarcation, subdemarcation);
+pattern RSP(role: Role, scenario: java Scenario, permission:Permission) {
+	find RSD(role, scenario, demarcation);
+    Demarcation.subdemarcations*(demarcation, demarcationP);
+    Demarcation.DP(demarcationP,permission);
 }
-
-pattern allSubDemarcationsIncludingSelf(supdemarcation: Demarcation, subdemarcation: Demarcation) {
-    Demarcation.subdemarcations*(supdemarcation, subdemarcation);
-}
-
 // ----------------------------
 
 
@@ -56,11 +55,7 @@ pattern allSubDemarcationsIncludingSelf(supdemarcation: Demarcation, subdemarcat
 pattern accessRelation(user: User, scenario: java Scenario, permission: Permission) {
     User.UR(user,role);
     Role.juniors*(role, roleP);
-    find Scenarios(scenario);
-    find RSD(roleP, scenario, demarcation);
-    find allSubDemarcationsIncludingSelf(demarcation, demarcationP);
-    Demarcation.subdemarcations*(demarcation, demarcationP);
-    Demarcation.DP(demarcationP,permission);
+    find RSP(roleP, scenario, permission);
 }
 
 // ---------------------------
@@ -284,4 +279,89 @@ pattern UnreachableAccess(user: User, scenario: java Scenario, zone: SecurityZon
     neg find ReachableAccess(user, scenario, zone);
 }
 
+pattern SoDURPattern(constraint: SoDURConstraint, user: User){
+	SoDURConstraint.left(constraint, left);
+	SoDURConstraint.right(constraint, right);
+   	Role.RU(left, user);
+   	Role.RU(right, user);
+}
 
+
+pattern SoDUDPattern(constraint: SoDUDConstraint, scenario: java Scenario, user: User){
+	SoDUDConstraint.left(constraint, left);
+	SoDUDConstraint.right(constraint, right);
+   	find USD(user, scenario, left);
+    find USD(user, scenario, right);
+}
+
+pattern SoDUPPattern(constraint: SoDUPConstraint, scenario: java Scenario, user: User){
+	SoDUPConstraint.left(constraint, left);
+	SoDUPConstraint.right(constraint, right);
+   	find USP(user, scenario, left);
+    find USP(user, scenario, right);
+}
+
+pattern SoDRDPattern(constraint: SoDRDConstraint, scenario: java Scenario, role: Role){
+	SoDRDConstraint.left(constraint, left);
+	SoDRDConstraint.right(constraint, right);
+   	find RSD(role, scenario, left);
+    find RSD(role, scenario, right);
+}
+
+pattern SoDRPPattern(constraint: SoDRPConstraint, scenario: java Scenario, role: Role){
+	SoDRPConstraint.left(constraint, left);
+	SoDRPConstraint.right(constraint, right);
+   	find RSP(role, scenario, left);
+    find RSP(role, scenario, right);
+}
+
+pattern SoDDPPattern(constraint: SoDDPConstraint, demarcation: Demarcation){
+	SoDDPConstraint.left(constraint, left);
+	SoDDPConstraint.right(constraint, right);
+   	Permission.PD(left, demarcation);
+   	Permission.PD(right, demarcation);
+}
+
+
+pattern PrerequisiteURPattern(constraint: PrerequisiteURConstraint, user: User){
+	PrerequisiteURConstraint.left(constraint, left);
+	PrerequisiteURConstraint.right(constraint, right);
+   	Role.RU(left, user);
+   	neg Role.RU(right, user);
+}
+
+
+pattern PrerequisiteUDPattern(constraint: PrerequisiteUDConstraint, scenario: java Scenario, user: User){
+	PrerequisiteUDConstraint.left(constraint, left);
+	PrerequisiteUDConstraint.right(constraint, right);
+   	find USD(user, scenario, left);
+    neg find USD(user, scenario, right);
+}
+
+pattern PrerequisiteUPPattern(constraint: PrerequisiteUPConstraint, scenario: java Scenario, user: User){
+	PrerequisiteUPConstraint.left(constraint, left);
+	PrerequisiteUPConstraint.right(constraint, right);
+   	find USP(user, scenario, left);
+    neg find USP(user, scenario, right);
+}
+
+pattern PrerequisiteRDPattern(constraint: PrerequisiteRDConstraint, scenario: java Scenario, role: Role){
+	PrerequisiteRDConstraint.left(constraint, left);
+	PrerequisiteRDConstraint.right(constraint, right);
+   	find RSD(role, scenario, left);
+    neg find RSD(role, scenario, right);
+}
+
+pattern PrerequisiteRPPattern(constraint: PrerequisiteRPConstraint, scenario: java Scenario, role: Role){
+	PrerequisiteRPConstraint.left(constraint, left);
+	PrerequisiteRPConstraint.right(constraint, right);
+   	find RSP(role, scenario, left);
+    neg find RSP(role, scenario, right);
+}
+
+pattern PrerequisiteDPPattern(constraint: PrerequisiteDPConstraint, demarcation: Demarcation){
+	PrerequisiteDPConstraint.left(constraint, left);
+	PrerequisiteDPConstraint.right(constraint, right);
+   	Permission.PD(left, demarcation);
+   	Permission.PD(right, demarcation);
+}

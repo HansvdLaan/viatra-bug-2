@@ -47,13 +47,13 @@ public class IntervalUtil {
                     resizeDayScheduleTimeRange(modifier, tree, daySchedule, overlap, resizedOverlap);
 
                     IntegerInterval resizedOverlap2 = new IntegerInterval(timeRange.getEnd() + 1, overlap.getEnd());
-                    addDayScheduleTimeRange(modifier, tree, daySchedule , "somename", resizedOverlap2);
+                    addDayScheduleTimeRange(modifier, tree, daySchedule , modifier.getUniqueID(daySchedule.getName()), resizedOverlap2);
                     copyAllRangeReferences(modifier, daySchedule, resizedOverlap, resizedOverlap2);
 
                     updateNextDayScheduleTimeRange(modifier, daySchedule, resizedOverlap, resizedOverlap2);
 
                     IntegerInterval newDayScheduleTimeRangeInterval = new IntegerInterval(timeRange.getStart(), timeRange.getEnd());
-                    addDayScheduleTimeRange(modifier, tree, daySchedule, "somename", newDayScheduleTimeRangeInterval);
+                    addDayScheduleTimeRange(modifier, tree, daySchedule, modifier.getUniqueID(daySchedule.getName()), newDayScheduleTimeRangeInterval);
                     copyAllRangeReferences(modifier, daySchedule, resizedOverlap, newDayScheduleTimeRangeInterval);
                     addRangeReference(modifier, daySchedule, newDayScheduleTimeRangeInterval, match.getInstance());
 
@@ -65,7 +65,7 @@ public class IntervalUtil {
                     resizeDayScheduleTimeRange(modifier, tree, daySchedule, overlap, resizedOverlap);
 
                     IntegerInterval newDayScheduleTimeRangeInterval = new IntegerInterval(timeRange.getStart(), timeRange.getEnd());
-                    addDayScheduleTimeRange(modifier, tree, daySchedule, "somename", newDayScheduleTimeRangeInterval);
+                    addDayScheduleTimeRange(modifier, tree, daySchedule, modifier.getUniqueID(daySchedule.getName()), newDayScheduleTimeRangeInterval);
                     copyAllRangeReferences(modifier, daySchedule, resizedOverlap, newDayScheduleTimeRangeInterval);
                     addRangeReference(modifier, daySchedule, newDayScheduleTimeRangeInterval, match.getInstance());
 
@@ -77,7 +77,7 @@ public class IntervalUtil {
                     resizeDayScheduleTimeRange(modifier, tree, daySchedule, overlap, resizedOverlap);
 
                     IntegerInterval newDayScheduleTimeRangeInterval = new IntegerInterval(timeRange.getStart(), timeRange.getEnd());
-                    addDayScheduleTimeRange(modifier, tree, daySchedule, "somename", newDayScheduleTimeRangeInterval);
+                    addDayScheduleTimeRange(modifier, tree, daySchedule, modifier.getUniqueID(daySchedule.getName()), newDayScheduleTimeRangeInterval);
                     copyAllRangeReferences(modifier, daySchedule, resizedOverlap, newDayScheduleTimeRangeInterval);
                     addRangeReference(modifier, daySchedule, newDayScheduleTimeRangeInterval, match.getInstance());
 
@@ -92,7 +92,7 @@ public class IntervalUtil {
                         resizeDayScheduleTimeRange(modifier, tree, daySchedule, overlap, resizedOverlap);
 
                         IntegerInterval newDayScheduleTimeRangeInterval = new IntegerInterval(timeRange.getStart(), overlap.getEnd());
-                        addDayScheduleTimeRange(modifier, tree, daySchedule, "somename", newDayScheduleTimeRangeInterval);
+                        addDayScheduleTimeRange(modifier, tree, daySchedule, modifier.getUniqueID(daySchedule.getName()), newDayScheduleTimeRangeInterval);
                         copyAllRangeReferences(modifier, daySchedule, resizedOverlap, newDayScheduleTimeRangeInterval);
                         addRangeReference(modifier, daySchedule, newDayScheduleTimeRangeInterval, match.getInstance());
 
@@ -103,7 +103,7 @@ public class IntervalUtil {
                         resizeDayScheduleTimeRange(modifier, tree, daySchedule, overlap, resizedOverlap);
 
                         IntegerInterval newDayScheduleTimeRangeInterval = new IntegerInterval(overlap.getStart(), timeRange.getEnd());
-                        addDayScheduleTimeRange(modifier, tree, daySchedule, "somename", newDayScheduleTimeRangeInterval);
+                        addDayScheduleTimeRange(modifier, tree, daySchedule, modifier.getUniqueID(daySchedule.getName()), newDayScheduleTimeRangeInterval);
                         copyAllRangeReferences(modifier, daySchedule, resizedOverlap, newDayScheduleTimeRangeInterval);
                         addRangeReference(modifier, daySchedule, newDayScheduleTimeRangeInterval, match.getInstance());
 
@@ -141,7 +141,7 @@ public class IntervalUtil {
 		for(DayScheduleTimeRange sr: list) {
 			modifier.getManipulation().remove(sr, ePackage.getDayScheduleTimeRange_TemporalContextTimeRanges(), match.getInstance());
 		}
-		modifier.getManipulation().remove(daySchedule, ePackage.getDayScheduleTimeRange_TemporalContextTimeRanges(), match.getInstance());
+		modifier.getManipulation().remove(daySchedule, ePackage.getDaySchedule_TimeRanges(), match.getInstance());
     }
 
     // ----------------------------------------------------------

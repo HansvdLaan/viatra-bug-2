@@ -237,4 +237,7 @@ public class PolicyAutomaticModifier {
 //    }
 
 
+    public EventDrivenTransformation getTransformation() {
+        return transformation;
+    }
 }
