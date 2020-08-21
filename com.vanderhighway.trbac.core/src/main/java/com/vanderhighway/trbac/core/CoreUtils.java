@@ -29,7 +29,7 @@ public class CoreUtils {
 
         Map<String, DayOfWeekSchedule> dayOfWeekScheduleMap = new HashMap<>();
         Map<String, Map<Integer, DayOfMonthSchedule>> dayOfMonthScheduleMap = new HashMap();
-        Schedule schedule = policy.getAuthorizationPolicy().getSchedule();
+        Schedule schedule = policy.getSchedule();
         TemporalContext alwaysTC = (TemporalContext) resource.getEObject("Always");
 
         List<String> allDays = Arrays.asList("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday");

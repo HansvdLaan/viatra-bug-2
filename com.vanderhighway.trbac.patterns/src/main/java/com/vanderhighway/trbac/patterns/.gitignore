@@ -23,7 +23,7 @@
 /.DisabledPriority.java._trace
 /.EnabledPriority.java._trace
 /.PolicyQueries.java._trace
-/.RangeP.java._trace
+/.TimeRangeP.java._trace
 /.SessionOfUser.java._trace
 /.SoDEmployeeAndVisitor.java._trace
 /.TimeRangeGroupCollection.java._trace
@@ -51,7 +51,7 @@
 /OnlyOneRnDManager.java
 /PolicyP.java
 /PolicyQueries.java
-/RangeP.java
+/TimeRangeP.java
 /RoleName.java
 /RoleShouldHaveADemarcation.java
 /SessionOfUser.java

@@ -46,14 +46,6 @@
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference trbac.ecore#//DaySchedule/timeRanges"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//DaySchedule/instances"/>
     </genClasses>
-    <genClasses ecoreClass="trbac.ecore#//Schedule">
-      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//Schedule/name"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//Schedule/daySchedules"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//Schedule/temporalContexts"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//Schedule/temporalGrantRules"/>
-      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//Schedule/startDate"/>
-      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//Schedule/endDate"/>
-    </genClasses>
     <genClasses ecoreClass="trbac.ecore#//DayOfWeekSchedule">
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference trbac.ecore#//DayOfWeekSchedule/DayOfYearSchedules"/>
     </genClasses>
@@ -91,6 +83,7 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//SecurityPolicy/buildings"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//SecurityPolicy/authorizationConstraints"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//SecurityPolicy/authorizationPolicy"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//SecurityPolicy/schedule"/>
     </genClasses>
     <genClasses ecoreClass="trbac.ecore#//Building">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//Building/name"/>
@@ -143,7 +136,6 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//AuthorizationPolicy/demarcations"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//AuthorizationPolicy/permissions"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//AuthorizationPolicy/objects"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//AuthorizationPolicy/schedule"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//AuthorizationPolicy/name"/>
     </genClasses>
     <genClasses ecoreClass="trbac.ecore#//PrerequisiteURConstraint"/>
@@ -152,5 +144,37 @@
     <genClasses ecoreClass="trbac.ecore#//PrerequisiteRDConstraint"/>
     <genClasses ecoreClass="trbac.ecore#//PrerequisiteRPConstraint"/>
     <genClasses ecoreClass="trbac.ecore#//PrerequisiteDPConstraint"/>
+    <genClasses ecoreClass="trbac.ecore#//BoDURConstraint"/>
+    <genClasses ecoreClass="trbac.ecore#//BoDUDConstraint"/>
+    <genClasses ecoreClass="trbac.ecore#//BoDRDConstraint"/>
+    <genClasses ecoreClass="trbac.ecore#//BoDUPConstraint"/>
+    <genClasses ecoreClass="trbac.ecore#//BoDRPConstraint"/>
+    <genClasses ecoreClass="trbac.ecore#//BoDDPConstraint"/>
+    <genClasses ecoreClass="trbac.ecore#//CardinalityURConstraint">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//CardinalityURConstraint/bound"/>
+    </genClasses>
+    <genClasses ecoreClass="trbac.ecore#//CardinalityUDConstraint">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//CardinalityUDConstraint/bound"/>
+    </genClasses>
+    <genClasses ecoreClass="trbac.ecore#//CardinalityRDConstraint">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//CardinalityRDConstraint/bound"/>
+    </genClasses>
+    <genClasses ecoreClass="trbac.ecore#//CardinalityUPConstraint">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//CardinalityUPConstraint/bound"/>
+    </genClasses>
+    <genClasses ecoreClass="trbac.ecore#//CardinalityRPConstraint">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//CardinalityRPConstraint/bound"/>
+    </genClasses>
+    <genClasses ecoreClass="trbac.ecore#//CardinalityDPConstraint">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//CardinalityDPConstraint/bound"/>
+    </genClasses>
+    <genClasses ecoreClass="trbac.ecore#//Schedule">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//Schedule/temporalContexts"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//Schedule/daySchedules"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//Schedule/temporalGrantRules"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//Schedule/name"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//Schedule/startDate"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//Schedule/endDate"/>
+    </genClasses>
   </genPackages>
 </genmodel:GenModel>

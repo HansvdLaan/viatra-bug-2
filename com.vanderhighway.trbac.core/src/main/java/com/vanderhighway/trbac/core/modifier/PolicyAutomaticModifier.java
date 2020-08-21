@@ -8,7 +8,7 @@ import com.google.common.base.Objects;
 
 import com.vanderhighway.trbac.core.validator.PolicyValidator;
 import com.vanderhighway.trbac.model.trbac.model.*;
-import com.vanderhighway.trbac.patterns.RangeP;
+import com.vanderhighway.trbac.patterns.TimeRangeP;
 
 import org.apache.log4j.Logger;
 import org.eclipse.viatra.query.runtime.api.AdvancedViatraQueryEngine;
@@ -53,8 +53,8 @@ public class PolicyAutomaticModifier {
         this.policyModifier = policyModifier;
         this.trees = new HashMap<>();
 
-        if(policy.getAuthorizationPolicy().getSchedule() != null) {
-            for (DaySchedule daySchedule : policy.getAuthorizationPolicy().getSchedule().getDaySchedules()) {
+        if(policy.getSchedule() != null) {
+            for (DaySchedule daySchedule : policy.getSchedule().getDaySchedules()) {
                 IntervalTree tree = IntervalTreeBuilder.newBuilder()
                         .usePredefinedType(IntervalTreeBuilder.IntervalType.LONG)
                         .collectIntervals(interval -> new ListIntervalCollection())
@@ -113,9 +113,9 @@ public class PolicyAutomaticModifier {
 
     public class DoProcessAddRange implements Callable<Void> {
         private final PolicyModifier modifier;
-        private final RangeP.Match it;
+        private final TimeRangeP.Match it;
 
-        public DoProcessAddRange(PolicyModifier modifier, RangeP.Match it) {
+        public DoProcessAddRange(PolicyModifier modifier, TimeRangeP.Match it) {
             this.modifier = modifier;
             this.it = it;
         }
@@ -129,9 +129,9 @@ public class PolicyAutomaticModifier {
 
     public class DoProcessRemoveRange implements Callable<Void> {
         private final PolicyModifier modifier;
-        private final RangeP.Match it;
+        private final TimeRangeP.Match it;
 
-        public DoProcessRemoveRange(PolicyModifier modifier, RangeP.Match it) {
+        public DoProcessRemoveRange(PolicyModifier modifier, TimeRangeP.Match it) {
             this.modifier = modifier;
             this.it = it;
         }
@@ -156,13 +156,13 @@ public class PolicyAutomaticModifier {
 
 
 
-    private EventDrivenTransformationRule<RangeP.Match, RangeP.Matcher> ProcessRanges() {
-        final Consumer<RangeP.Match> function = (RangeP.Match it) -> {
+    private EventDrivenTransformationRule<TimeRangeP.Match, TimeRangeP.Matcher> ProcessRanges() {
+        final Consumer<TimeRangeP.Match> function = (TimeRangeP.Match it) -> {
             System.out.println("hey!");
         };
-        EventDrivenTransformationRule<RangeP.Match, RangeP.Matcher> dayrangerule =
-                this._eventDrivenTransformationRuleFactory.createRule(RangeP.instance()).action(
-                        CRUDActivationStateEnum.CREATED, (RangeP.Match it) -> {
+        EventDrivenTransformationRule<TimeRangeP.Match, TimeRangeP.Matcher> dayrangerule =
+                this._eventDrivenTransformationRuleFactory.createRule(TimeRangeP.instance()).action(
+                        CRUDActivationStateEnum.CREATED, (TimeRangeP.Match it) -> {
                             //System.out.println("DayRangeMatch CREATED:" + it.toString());
                             try {
                                 IntervalTree tree = trees.get(it.getInstance().getDaySchedule().getName());
@@ -176,10 +176,10 @@ public class PolicyAutomaticModifier {
                                 e.printStackTrace();
                             }
                         }).action(
-                        CRUDActivationStateEnum.UPDATED, (RangeP.Match it) -> {
+                        CRUDActivationStateEnum.UPDATED, (TimeRangeP.Match it) -> {
                             //System.out.println("DayRangeMatch UPDATED:" + it.toString());
                         }).action(
-                        CRUDActivationStateEnum.DELETED, (RangeP.Match it) -> {
+                        CRUDActivationStateEnum.DELETED, (TimeRangeP.Match it) -> {
                             try {
                                 IntervalTree tree = trees.get(it.getInstance().getDaySchedule().getName());
                                 IntervalUtil.processRemoveRange(this.policyModifier, tree, it);

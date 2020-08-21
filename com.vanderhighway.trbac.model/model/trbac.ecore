@@ -60,18 +60,6 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="instances" upperBound="-1"
         eType="#//DayScheduleTimeRange" containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="Schedule">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
-        iD="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="daySchedules" upperBound="-1"
-        eType="#//DaySchedule" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="temporalContexts" upperBound="-1"
-        eType="#//TemporalContext" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="temporalGrantRules" upperBound="-1"
-        eType="#//TemporalGrantRule" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="startDate" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//String"/>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="endDate" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//String"/>
-  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="DayOfWeekSchedule" eSuperTypes="#//DaySchedule">
     <eStructuralFeatures xsi:type="ecore:EReference" name="DayOfYearSchedules" upperBound="-1"
         eType="#//DayOfYearSchedule" eOpposite="#//DayOfYearSchedule/dayOfWeekSchedule"/>
@@ -127,6 +115,8 @@
         upperBound="-1" eType="#//AuthorizationConstraint" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="authorizationPolicy" eType="#//AuthorizationPolicy"
         containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="schedule" eType="#//Schedule"
+        containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Building">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
@@ -140,7 +130,8 @@
         eType="#//SecurityZone"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="AuthorizationConstraint">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Name"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//Name"
+        iD="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="UnaryUserConstraint" eSuperTypes="#//AuthorizationConstraint">
     <eStructuralFeatures xsi:type="ecore:EReference" name="user" eType="#//User"/>
@@ -187,8 +178,6 @@
         eType="#//Permission" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="objects" upperBound="-1"
         eType="#//Object" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="schedule" eType="#//Schedule"
-        containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
         iD="true"/>
   </eClassifiers>
@@ -198,4 +187,39 @@
   <eClassifiers xsi:type="ecore:EClass" name="PrerequisiteRDConstraint" eSuperTypes="#//BinaryDemarcationConstraint"/>
   <eClassifiers xsi:type="ecore:EClass" name="PrerequisiteRPConstraint" eSuperTypes="#//BinaryPermissionConstraint"/>
   <eClassifiers xsi:type="ecore:EClass" name="PrerequisiteDPConstraint" eSuperTypes="#//BinaryPermissionConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="BoDURConstraint" eSuperTypes="#//BinaryRoleConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="BoDUDConstraint" eSuperTypes="#//BinaryDemarcationConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="BoDRDConstraint" eSuperTypes="#//BinaryDemarcationConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="BoDUPConstraint" eSuperTypes="#//BinaryPermissionConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="BoDRPConstraint" eSuperTypes="#//BinaryPermissionConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="BoDDPConstraint" eSuperTypes="#//BinaryPermissionConstraint"/>
+  <eClassifiers xsi:type="ecore:EClass" name="CardinalityURConstraint" eSuperTypes="#//UnaryRoleConstraint">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="bound" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//IntObject"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="CardinalityUDConstraint" eSuperTypes="#//UnaryDemarcationConstraint">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="bound" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//IntObject"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="CardinalityRDConstraint" eSuperTypes="#//UnaryDemarcationConstraint">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="bound" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//IntObject"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="CardinalityUPConstraint" eSuperTypes="#//UnaryPermissionConstraint">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="bound" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//IntObject"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="CardinalityRPConstraint" eSuperTypes="#//UnaryPermissionConstraint">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="bound" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//IntObject"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="CardinalityDPConstraint" eSuperTypes="#//UnaryPermissionConstraint">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="bound" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//IntObject"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Schedule">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="temporalContexts" upperBound="-1"
+        eType="#//TemporalContext" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="daySchedules" upperBound="-1"
+        eType="#//DaySchedule" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="temporalGrantRules" upperBound="-1"
+        eType="#//TemporalGrantRule" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="startDate" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="endDate" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//String"/>
+  </eClassifiers>
 </ecore:EPackage>

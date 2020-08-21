@@ -30,7 +30,7 @@ public class PolicyValidator {
 
     //TODO: move this to somewhere else!
     public void addChangeListeners(AdvancedViatraQueryEngine engine, boolean fireNow) {
-        //fireNow = true ; //parameter means all current matches are sent to the listener
+        fireNow = true ; //parameter means all current matches are sent to the listener
 
         // Add some other Listeners
         //engine.addMatchUpdateListener(UserShouldHaveARole.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getUserShouldHaveARoleUpdateListener(), true);
@@ -59,8 +59,8 @@ public class PolicyValidator {
         //engine.addMatchUpdateListener(AccessRelation2.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getAccessRelation2UpdateListener(), true);
 //        engine.addMatchUpdateListener(DayRange.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getDayRangeUpdateListener(), true);
 //        engine.addMatchUpdateListener(NonOverlappingDayRange.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getNonOverlappingDayRangeUpdateListener(), true);
-        //engine.addMatchUpdateListener(RangeP.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getRangeUpdateListener(), true);
-        //engine.addMatchUpdateListener(ScheduleRangeP.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getScheduleRangeUpdateListener(), true);
+        //engine.addMatchUpdateListener(TimeRangeP.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getRangeUpdateListener(), true);
+        //engine.addMatchUpdateListener(ScheduleTimeRangeP.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getScheduleRangeUpdateListener(), true);
         //engine.addMatchUpdateListener(TimeRange.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getTimeRangeUpdateListener(), true);
         //engine.addMatchUpdateListener(SetTestQuery.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getSetTestQueryUpdateListener(), true);
         //engine.addMatchUpdateListener(TimeRangeGroupsDistinct.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getTimeRangeGroupDistinctUpdateListener(), true);
@@ -74,29 +74,10 @@ public class PolicyValidator {
         //engine.addMatchUpdateListener(EnabledPriority.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getEnabledPriorityUpdateListener(), true);
         //engine.addMatchUpdateListener(DisabledPriority.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getDisabledPriorityUpdateListener(), true);
         //engine.addMatchUpdateListener(TimeRangeGroupCollectionEnabled.Matcher.on(engine), ListenerFactory.getTimeRangeGroupCollectionEnabledUpdateListener(), true);
-        engine.addMatchUpdateListener(AccessRelation.Matcher.on(engine), ListenerFactory.getAccessRelationUpdateListener(), fireNow);
-        //engine.addMatchUpdateListener(AllJuniors.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getAllJuniorsUpdateListener(), true);
 
-        engine.addMatchUpdateListener(Reachable.Matcher.on(engine), ListenerFactory.getReachableUpdateListener(), fireNow);
-        engine.addMatchUpdateListener(ReachableAccess.Matcher.on(engine), ListenerFactory.getReachableAccessUpdateListener(), fireNow);
-        engine.addMatchUpdateListener(UnreachableAccess.Matcher.on(engine), ListenerFactory.getUnreachableAccessUpdateListener(), fireNow);
-
-        engine.addMatchUpdateListener(Scenarios.Matcher.on(engine), com.vanderhighway.trbac.core.validator.ListenerFactory.getScenarioUpdateListener(), fireNow);
-
-        engine.addMatchUpdateListener(SoDURPattern.Matcher.on(engine), ListenerFactory.getSoDURPatternUpdateListener(), fireNow);
-        engine.addMatchUpdateListener(SoDUDPattern.Matcher.on(engine), ListenerFactory.getSoDUDPatternUpdateListener(), fireNow);
-        engine.addMatchUpdateListener(SoDUPPattern.Matcher.on(engine), ListenerFactory.getSoDUPPatternUpdateListener(), fireNow);
-        engine.addMatchUpdateListener(SoDRDPattern.Matcher.on(engine), ListenerFactory.getSoDRDPatternUpdateListener(), fireNow);
-        engine.addMatchUpdateListener(SoDRPPattern.Matcher.on(engine), ListenerFactory.getSoDRPPatternUpdateListener(), fireNow);
-        engine.addMatchUpdateListener(SoDDPPattern.Matcher.on(engine), ListenerFactory.getSoDDPPatternUpdateListener(), fireNow);
-
-        //TODO: fix spelling
-        engine.addMatchUpdateListener(PrerequisteURPattern.Matcher.on(engine), ListenerFactory.getPrerequisiteURPatternUpdateListener(), fireNow);
-        engine.addMatchUpdateListener(PrerequisiteUDPattern.Matcher.on(engine), ListenerFactory.getPrerequisiteUDPatternUpdateListener(), fireNow);
-        engine.addMatchUpdateListener(PrerequisiteUPPattern.Matcher.on(engine), ListenerFactory.getPrerequisiteUPPatternUpdateListener(), fireNow);
-        engine.addMatchUpdateListener(PrerequisiteRDPattern.Matcher.on(engine), ListenerFactory.getPrerequisiteRDPatternUpdateListener(), fireNow);
-        engine.addMatchUpdateListener(PrerequisiteRPPattern.Matcher.on(engine), ListenerFactory.getPrerequisiteRPPatternUpdateListener(), fireNow);
-        engine.addMatchUpdateListener(PrerequisiteDPPattern.Matcher.on(engine), ListenerFactory.getPrerequisiteDPPatternUpdateListener(), fireNow);
+        RelationsUpdateListenerFactory.addALlUpdateListeners(engine, false);
+        ConstraintUpdateListenerFactory.addALlUpdateListeners(engine, false);
+        SmellsUpdateListenerFactory.addALlUpdateListeners(engine, false);
 
     }
 

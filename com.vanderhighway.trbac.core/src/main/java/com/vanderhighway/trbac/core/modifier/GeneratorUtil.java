@@ -66,7 +66,7 @@ public class GeneratorUtil {
         schedule.setName("DummySchedule");
         schedule.setStartDate("2020-01-01");
         schedule.setEndDate("2030-01-01");
-        authorizationPolicy.setSchedule(schedule);
+        securityPolicy.setSchedule(schedule);
 
         return securityPolicy;
     }

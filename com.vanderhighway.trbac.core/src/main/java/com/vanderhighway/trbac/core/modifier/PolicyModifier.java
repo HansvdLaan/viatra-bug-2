@@ -105,7 +105,7 @@ public class PolicyModifier {
 	}
 
 	public TemporalContext addTemporalContext(String name) throws ModelManipulationException {
-		Schedule schedule = securityPolicy.getAuthorizationPolicy().getSchedule();
+		Schedule schedule = securityPolicy.getSchedule();
 		TemporalContext context = (TemporalContext) this.manipulation.createChild(schedule, ePackage.getSchedule_TemporalContexts(), ePackage.getTemporalContext());
 		this.manipulation.set(context, ePackage.getTemporalContext_Name(), name);
 		return context;
@@ -143,7 +143,7 @@ public class PolicyModifier {
 	}
 
 	public DayOfWeekSchedule addDayOfWeekSchedule(String name) throws ModelManipulationException {
-		Schedule schedule = securityPolicy.getAuthorizationPolicy().getSchedule();
+		Schedule schedule = securityPolicy.getSchedule();
 		DayOfWeekSchedule weekdaySchedule = (DayOfWeekSchedule) this.manipulation.createChild(schedule,
 				ePackage.getSchedule_DaySchedules(), ePackage.getDayOfWeekSchedule());
 		this.manipulation.set(weekdaySchedule, ePackage.getDaySchedule_Name(), name);
@@ -155,7 +155,7 @@ public class PolicyModifier {
 	}
 
 	public DayOfMonthSchedule addDayOfMonthSchedule(String name) throws ModelManipulationException {
-		Schedule schedule = securityPolicy.getAuthorizationPolicy().getSchedule();
+		Schedule schedule = securityPolicy.getSchedule();
 		DayOfMonthSchedule yeardaySchedule = (DayOfMonthSchedule) this.manipulation.createChild(schedule,
 				ePackage.getSchedule_DaySchedules(), ePackage.getDayOfMonthSchedule());
 		this.manipulation.set(yeardaySchedule, ePackage.getDaySchedule_Name(), name);
@@ -167,7 +167,7 @@ public class PolicyModifier {
 	}
 
 	public DayOfYearSchedule addDayOfYearSchedule(DayOfWeekSchedule weekSchedule, DayOfMonthSchedule monthSchedule, String name) throws ModelManipulationException {
-		Schedule schedule = securityPolicy.getAuthorizationPolicy().getSchedule();
+		Schedule schedule = securityPolicy.getSchedule();
 		DayOfYearSchedule yearSchedule = (DayOfYearSchedule) manipulation.createChild(schedule,
 				ePackage.getSchedule_DaySchedules(), ePackage.getDayOfYearSchedule());
 		this.manipulation.set(yearSchedule, ePackage.getDayOfYearSchedule_DayOfWeekSchedule(), weekSchedule);
@@ -181,7 +181,7 @@ public class PolicyModifier {
 	}
 
 	public TemporalGrantRule addTemporalGrantRule(TemporalContext time, String name, Role role, Demarcation demarcation, boolean enable, int priority) throws ModelManipulationException {
-		Schedule schedule = securityPolicy.getAuthorizationPolicy().getSchedule();
+		Schedule schedule = securityPolicy.getSchedule();
 		TemporalGrantRule rule = (TemporalGrantRule) manipulation.createChild(schedule, ePackage.getSchedule_TemporalGrantRules(), ePackage.getTemporalGrantRule());
 		manipulation.set(rule, ePackage.getTemporalGrantRule_TemporalContext(), time);
 		manipulation.set(rule, ePackage.getTemporalGrantRule_Name(), name);
@@ -401,8 +401,116 @@ public class PolicyModifier {
 		return constraint;
 	}
 
+	public BoDURConstraint addBoDURConstraint(String name, Role role1, Role role2) throws ModelManipulationException {
+		BoDURConstraint constraint = (BoDURConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getBoDURConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryRoleConstraint_Left(), role1);
+		manipulation.set(constraint, ePackage.getBinaryRoleConstraint_Right(), role2);
+		return constraint;
+	}
+
+	public BoDUDConstraint addBoDUDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2) throws ModelManipulationException {
+		BoDUDConstraint constraint = (BoDUDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getBoDUDConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Left(), demarcation1);
+		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Right(), demarcation2);
+		return constraint;
+	}
+
+	public BoDUPConstraint addBoDUPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
+		BoDUPConstraint constraint = (BoDUPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getBoDUPConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Right(), permission2);
+		return constraint;
+	}
+
+	public BoDRDConstraint addBoDRDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2) throws ModelManipulationException {
+		BoDRDConstraint constraint = (BoDRDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getBoDRDConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Left(), demarcation1);
+		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Right(), demarcation2);
+		return constraint;
+	}
+
+	public BoDRPConstraint addBoDRPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
+		BoDRPConstraint constraint = (BoDRPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getBoDRPConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Right(), permission2);
+		return constraint;
+	}
+
+	public BoDDPConstraint addBoDDPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
+		BoDDPConstraint constraint = (BoDDPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getBoDDPConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
+		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Right(), permission2);
+		return constraint;
+	}
+
+	public CardinalityURConstraint addCardinalityURConstraint(String name, Role role, int bound) throws ModelManipulationException {
+		CardinalityURConstraint constraint = (CardinalityURConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getCardinalityURConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getUnaryRoleConstraint_Role(), role);
+		manipulation.set(constraint, ePackage.getCardinalityURConstraint_Bound(), bound);
+		return constraint;
+	}
+
+	public CardinalityUDConstraint addCardinalityUDConstraint(String name, Demarcation demarcation, int bound) throws ModelManipulationException {
+		CardinalityUDConstraint constraint = (CardinalityUDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getCardinalityUDConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getUnaryDemarcationConstraint_Demarcation(), demarcation);
+		manipulation.set(constraint, ePackage.getCardinalityUDConstraint_Bound(), bound);
+		return constraint;
+	}
+
+	public CardinalityUPConstraint addCardinalityUPConstraint(String name, Permission permission, int bound) throws ModelManipulationException {
+		CardinalityUPConstraint constraint = (CardinalityUPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getCardinalityUPConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getUnaryPermissionConstraint_Permission(), permission);
+		manipulation.set(constraint, ePackage.getCardinalityUPConstraint_Bound(), bound);
+		return constraint;
+	}
+
+	public CardinalityRDConstraint addCardinalityRDConstraint(String name, Demarcation demarcation, int bound) throws ModelManipulationException {
+		CardinalityRDConstraint constraint = (CardinalityRDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getCardinalityRDConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getUnaryDemarcationConstraint_Demarcation(), demarcation);
+		manipulation.set(constraint, ePackage.getCardinalityRDConstraint_Bound(), bound);
+		return constraint;
+	}
+
+	public CardinalityRPConstraint addCardinalityRPConstraint(String name, Permission permission, int bound) throws ModelManipulationException {
+		CardinalityRPConstraint constraint = (CardinalityRPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getCardinalityRPConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getUnaryPermissionConstraint_Permission(), permission);
+		manipulation.set(constraint, ePackage.getCardinalityRPConstraint_Bound(), bound);
+		return constraint;
+	}
+
+	public CardinalityDPConstraint addCardinalityDPConstraint(String name, Permission permission, int bound) throws ModelManipulationException {
+		CardinalityDPConstraint constraint = (CardinalityDPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+				ePackage.getCardinalityDPConstraint());
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
+		manipulation.set(constraint, ePackage.getUnaryPermissionConstraint_Permission(), permission);
+		manipulation.set(constraint, ePackage.getCardinalityDPConstraint_Bound(), bound);
+		return constraint;
+	}
+
 	public void removeAuthorizationConstraint(AuthorizationConstraint constraint) throws ModelManipulationException {
-		manipulation.remove(constraint, ePackage.getSecurityPolicy_AuthorizationConstraints(), constraint);
+		manipulation.remove(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(), constraint);
 	}
 
 	public SecurityPolicy getSecurityPolicy() {
