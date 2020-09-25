@@ -85,27 +85,27 @@ public class RelationsUpdateListenerFactory {
 		return new IMatchUpdateListener<Reachable.Match>() {
 			@Override
 			public void notifyAppearance(Reachable.Match match) {
-				System.out.println("[ADD Reachable Match] " + match.getBuilding().getName() + ":" + match.getZone().getName());
+				System.out.println("[ADD Reachable Match] " + match.getZone().getName());
 			}
 
 			@Override
 			public void notifyDisappearance(Reachable.Match match) {
-				System.out.println("[REM Reachable Match]" + match.getBuilding().getName() + ":" + match.getZone().getName());
+				System.out.println("[REM Reachable Match]" + match.getZone().getName());
 			}
 		};
 	}
 
-	public static IMatchUpdateListener<ReachableAccess.Match> getReachableAccessUpdateListener() {
-		return new IMatchUpdateListener<ReachableAccess.Match>() {
+	public static IMatchUpdateListener<SecurityZoneAccessible.Match> getSecurityZoneAccessibleUpdateListener() {
+		return new IMatchUpdateListener<SecurityZoneAccessible.Match>() {
 			@Override
-			public void notifyAppearance(ReachableAccess.Match match) {
-				System.out.println("[ADD ReachableAccess Match] " + match.getUser().getName()
+			public void notifyAppearance(SecurityZoneAccessible.Match match) {
+				System.out.println("[ADD SecurityZoneAccessible Match] " + match.getUser().getName()
 						+ " - " + match.getZone().getName() + " during " + match.getScenario().toString());
 			}
 
 			@Override
-			public void notifyDisappearance(ReachableAccess.Match match) {
-				System.out.println("[REMOVE ReachableAccess Match] " + match.getUser().getName()
+			public void notifyDisappearance(SecurityZoneAccessible.Match match) {
+				System.out.println("[REMOVE SecurityZoneAccessible Match] " + match.getUser().getName()
 						+ " - " + match.getZone().getName() + " during " + match.getScenario().toString());
 			}
 		};

@@ -3,7 +3,6 @@ package com.vanderhighway.trbac.core.modifier;
 import com.brein.time.timeintervals.intervals.IntegerInterval;
 import com.google.common.base.Objects;
 import com.vanderhighway.trbac.model.trbac.model.*;
-import com.vanderhighway.trbac.model.trbac.model.Object;
 import com.vanderhighway.trbac.model.trbac.model.TRBACPackage;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.viatra.query.runtime.api.AdvancedViatraQueryEngine;
@@ -43,16 +42,16 @@ public class PolicyModifier {
 
 	private AdvancedViatraQueryEngine engine;
 
-	private SecurityPolicy securityPolicy;
+	private SiteAccessControlSystem system;
 	private Resource resource;
 
 	// Map used to give a unique ID to instances;
 	private HashMap<String, Integer> instanceIDCounter;
 
-	public PolicyModifier(final AdvancedViatraQueryEngine engine, SecurityPolicy securityPolicy, Resource resource) {
+	public PolicyModifier(final AdvancedViatraQueryEngine engine, SiteAccessControlSystem system, Resource resource) {
 		this.engine = engine;
 		this.manipulation = new SimpleModelManipulations(this.engine);
-		this.securityPolicy = securityPolicy;
+		this.system = system;
 		this.resource = resource;
 		this.instanceIDCounter = new HashMap<>();
 		//this.transformation = BatchTransformation.forEngine(this.engine).build();
@@ -61,7 +60,7 @@ public class PolicyModifier {
 	// ---------- Add / Remove Authorization Model Entities ----------
 
 	public User addUser(String name) throws ModelManipulationException {
-		User user = (User) manipulation.createChild(securityPolicy.getAuthorizationPolicy(),
+		User user = (User) manipulation.createChild(system.getAuthorizationPolicy(),
 				ePackage.getAuthorizationPolicy_Users(), ePackage.getUser());
 		manipulation.set(user, ePackage.getUser_Name(), name);
 		return user;
@@ -72,7 +71,7 @@ public class PolicyModifier {
 	}
 
 	public Role addRole(String name) throws ModelManipulationException {
-		Role role = (Role) manipulation.createChild(securityPolicy.getAuthorizationPolicy(),
+		Role role = (Role) manipulation.createChild(system.getAuthorizationPolicy(),
 				ePackage.getAuthorizationPolicy_Roles(), ePackage.getRole());
 		manipulation.set(role, ePackage.getRole_Name(), name);
 		return role;
@@ -83,7 +82,7 @@ public class PolicyModifier {
 	}
 
 	public Demarcation addDemarcation(String name) throws ModelManipulationException {
-		Demarcation demarcation = (Demarcation) manipulation.createChild(securityPolicy.getAuthorizationPolicy(),
+		Demarcation demarcation = (Demarcation) manipulation.createChild(system.getAuthorizationPolicy(),
 				ePackage.getAuthorizationPolicy_Demarcations(), ePackage.getDemarcation());
 		manipulation.set(demarcation, ePackage.getDemarcation_Name(), name);
 		return demarcation;
@@ -94,7 +93,7 @@ public class PolicyModifier {
 	}
 
 	public Permission addPermission(String name) throws ModelManipulationException {
-		Permission permission = (Permission) manipulation.createChild(securityPolicy.getAuthorizationPolicy(),
+		Permission permission = (Permission) manipulation.createChild(system.getAuthorizationPolicy(),
 				ePackage.getAuthorizationPolicy_Permissions(), ePackage.getPermission());
 		manipulation.set(permission, ePackage.getPermission_Name(), name);
 		return permission;
@@ -105,7 +104,7 @@ public class PolicyModifier {
 	}
 
 	public TemporalContext addTemporalContext(String name) throws ModelManipulationException {
-		Schedule schedule = securityPolicy.getSchedule();
+		Schedule schedule = system.getSchedule();
 		TemporalContext context = (TemporalContext) this.manipulation.createChild(schedule, ePackage.getSchedule_TemporalContexts(), ePackage.getTemporalContext());
 		this.manipulation.set(context, ePackage.getTemporalContext_Name(), name);
 		return context;
@@ -143,7 +142,7 @@ public class PolicyModifier {
 	}
 
 	public DayOfWeekSchedule addDayOfWeekSchedule(String name) throws ModelManipulationException {
-		Schedule schedule = securityPolicy.getSchedule();
+		Schedule schedule = system.getSchedule();
 		DayOfWeekSchedule weekdaySchedule = (DayOfWeekSchedule) this.manipulation.createChild(schedule,
 				ePackage.getSchedule_DaySchedules(), ePackage.getDayOfWeekSchedule());
 		this.manipulation.set(weekdaySchedule, ePackage.getDaySchedule_Name(), name);
@@ -155,7 +154,7 @@ public class PolicyModifier {
 	}
 
 	public DayOfMonthSchedule addDayOfMonthSchedule(String name) throws ModelManipulationException {
-		Schedule schedule = securityPolicy.getSchedule();
+		Schedule schedule = system.getSchedule();
 		DayOfMonthSchedule yeardaySchedule = (DayOfMonthSchedule) this.manipulation.createChild(schedule,
 				ePackage.getSchedule_DaySchedules(), ePackage.getDayOfMonthSchedule());
 		this.manipulation.set(yeardaySchedule, ePackage.getDaySchedule_Name(), name);
@@ -166,12 +165,25 @@ public class PolicyModifier {
 		manipulation.remove(yeardaySchedule);
 	}
 
-	public DayOfYearSchedule addDayOfYearSchedule(DayOfWeekSchedule weekSchedule, DayOfMonthSchedule monthSchedule, String name) throws ModelManipulationException {
-		Schedule schedule = securityPolicy.getSchedule();
+	public DayOfWeekMonthSchedule addDayOfWeekMonthSchedule(DayOfWeekSchedule weekSchedule, DayOfMonthSchedule monthSchedule, String name) throws ModelManipulationException {
+		Schedule schedule = system.getSchedule();
+		DayOfWeekMonthSchedule weekMonthSchedule = (DayOfWeekMonthSchedule) manipulation.createChild(schedule,
+				ePackage.getSchedule_DaySchedules(), ePackage.getDayOfWeekMonthSchedule());
+		this.manipulation.set(weekMonthSchedule, ePackage.getDayOfWeekMonthSchedule_DayOfWeekSchedule(), weekSchedule);
+		this.manipulation.set(weekMonthSchedule, ePackage.getDayOfWeekMonthSchedule_DayOfMonthSchedule(), monthSchedule);
+		manipulation.set(weekMonthSchedule, ePackage.getDaySchedule_Name(), name);
+		return weekMonthSchedule;
+	}
+
+	public void removeDayOfWeekMonthSchedule(DayOfWeekMonthSchedule schedule) throws ModelManipulationException {
+		manipulation.remove(schedule);
+	}
+
+	public DayOfYearSchedule addDayOfYearSchedule(DayOfWeekMonthSchedule weekMonthSchedule, String name) throws ModelManipulationException {
+		Schedule schedule = system.getSchedule();
 		DayOfYearSchedule yearSchedule = (DayOfYearSchedule) manipulation.createChild(schedule,
 				ePackage.getSchedule_DaySchedules(), ePackage.getDayOfYearSchedule());
-		this.manipulation.set(yearSchedule, ePackage.getDayOfYearSchedule_DayOfWeekSchedule(), weekSchedule);
-		this.manipulation.set(yearSchedule, ePackage.getDayOfYearSchedule_DayOfMonthSchedule(), monthSchedule);
+		this.manipulation.set(yearSchedule, ePackage.getDayOfYearSchedule_DayOfWeekMonthSchedule(), weekMonthSchedule);
 		manipulation.set(yearSchedule, ePackage.getDaySchedule_Name(), name);
 		return yearSchedule;
 	}
@@ -181,7 +193,7 @@ public class PolicyModifier {
 	}
 
 	public TemporalGrantRule addTemporalGrantRule(TemporalContext time, String name, Role role, Demarcation demarcation, boolean enable, int priority) throws ModelManipulationException {
-		Schedule schedule = securityPolicy.getSchedule();
+		Schedule schedule = system.getSchedule();
 		TemporalGrantRule rule = (TemporalGrantRule) manipulation.createChild(schedule, ePackage.getSchedule_TemporalGrantRules(), ePackage.getTemporalGrantRule());
 		manipulation.set(rule, ePackage.getTemporalGrantRule_TemporalContext(), time);
 		manipulation.set(rule, ePackage.getTemporalGrantRule_Name(), name);
@@ -196,20 +208,27 @@ public class PolicyModifier {
 		manipulation.remove(rule);
 	}
 
-	public Building addBuilding(String name) throws ModelManipulationException {
-		Building building = (Building) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_Buildings(), ePackage.getBuilding());
-		manipulation.set(building, ePackage.getBuilding_Name(), name);
-		return building;
+	public TemporalAuthenticationRule addTemporalAuthenticationRule(TemporalContext time, String name, SecurityZone zone, int status, int priority) throws ModelManipulationException, InvocationTargetException {
+		return engine.delayUpdatePropagation( () -> {
+			TemporalAuthenticationRule rule = (TemporalAuthenticationRule) manipulation.createChild(this.system.getAuthenticationPolicy(),
+					ePackage.getAuthenticationPolicy_TemporalAuthenticationRules(), ePackage.getTemporalAuthenticationRule());
+			manipulation.set(rule, ePackage.getTemporalAuthenticationRule_TemporalContext(), time);
+			manipulation.set(rule, ePackage.getTemporalAuthenticationRule_Name(), name);
+			manipulation.set(rule, ePackage.getTemporalAuthenticationRule_SecurityZone(), zone);
+			manipulation.set(rule, ePackage.getTemporalAuthenticationRule_Status(), status);
+			manipulation.set(rule, ePackage.getTemporalAuthenticationRule_Priority(), priority);
+			return rule;
+		});
 	}
 
-	public void removeBuilding(Building building) throws ModelManipulationException {
-		manipulation.remove(building);
+	public void removeTemporalAuthenticationRule(TemporalAuthenticationRule rule) throws ModelManipulationException {
+		manipulation.remove(rule);
 	}
 
-	public SecurityZone addSecurityZone(Building building, String name, boolean publicZone) throws ModelManipulationException {
-		SecurityZone zone = (SecurityZone) manipulation.createChild(building, ePackage.getBuilding_Securityzones(),
+	public SecurityZone addSecurityZone(String name, boolean publicZone) throws ModelManipulationException {
+		SecurityZone zone = (SecurityZone) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_SecurityZones(),
 				ePackage.getSecurityZone());
-		manipulation.set(zone, ePackage.getObject_Name(), name);
+		manipulation.set(zone, ePackage.getXObject_Name(), name);
 		manipulation.set(zone, ePackage.getSecurityZone_Public(), publicZone);
 		return zone;
 	}
@@ -228,14 +247,6 @@ public class PolicyModifier {
 
 	public void deassignRoleFromUser(User user, Role role) throws ModelManipulationException {
 		manipulation.remove(user, ePackage.getUser_UR(), role);
-	}
-
-	public void assignDemarcationToRole(Role role, Demarcation demarcation) throws ModelManipulationException {
-		manipulation.addTo(role, ePackage.getRole_RD(), demarcation);
-	}
-
-	public void deassignDemarcationFromRole(Role role, Demarcation demarcation) throws ModelManipulationException {
-		manipulation.remove(role, ePackage.getRole_RD(), demarcation);
 	}
 
 	public void assignPermissionToDemarcation(Demarcation demarcation, Permission permission) throws ModelManipulationException {
@@ -294,7 +305,7 @@ public class PolicyModifier {
 	// ---------- Add / Remove SoD constraints ----------
 
 	public SoDURConstraint addSoDURConstraint(String name, Role role1, Role role2) throws ModelManipulationException {
-		SoDURConstraint constraint = (SoDURConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+		SoDURConstraint constraint = (SoDURConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getSoDURConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryRoleConstraint_Left(), role1);
@@ -302,44 +313,48 @@ public class PolicyModifier {
 		return constraint;
 	}
 
-	public SoDUDConstraint addSoDUDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2) throws ModelManipulationException {
-		SoDUDConstraint constraint = (SoDUDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public SoDUDConstraint addSoDUDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2, TemporalContext context) throws ModelManipulationException {
+		SoDUDConstraint constraint = (SoDUDConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getSoDUDConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Left(), demarcation1);
 		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Right(), demarcation2);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
 		return constraint;
 	}
 
-	public SoDUPConstraint addSoDUPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
-		SoDUPConstraint constraint = (SoDUPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public SoDUPConstraint addSoDUPConstraint(String name, Permission permission1, Permission permission2, TemporalContext context) throws ModelManipulationException {
+		SoDUPConstraint constraint = (SoDUPConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getSoDUPConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
 		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Right(), permission2);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
 		return constraint;
 	}
 
-	public SoDRDConstraint addSoDRDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2) throws ModelManipulationException {
-		SoDRDConstraint constraint = (SoDRDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public SoDRDConstraint addSoDRDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2, TemporalContext context) throws ModelManipulationException {
+		SoDRDConstraint constraint = (SoDRDConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getSoDRDConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Left(), demarcation1);
 		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Right(), demarcation2);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
 		return constraint;
 	}
 
-	public SoDRPConstraint addSoDRPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
-		SoDRPConstraint constraint = (SoDRPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public SoDRPConstraint addSoDRPConstraint(String name, Permission permission1, Permission permission2, TemporalContext context) throws ModelManipulationException {
+		SoDRPConstraint constraint = (SoDRPConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getSoDRPConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
 		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Right(), permission2);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
 		return constraint;
 	}
 
 	public SoDDPConstraint addSoDDPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
-		SoDDPConstraint constraint = (SoDDPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+		SoDDPConstraint constraint = (SoDDPConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getSoDDPConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
@@ -347,8 +362,10 @@ public class PolicyModifier {
 		return constraint;
 	}
 
+	// ---------- Add / Remove Prerequisite constraints ----------
+
 	public PrerequisiteURConstraint addPrerequisiteURConstraint(String name, Role role1, Role role2) throws ModelManipulationException {
-		PrerequisiteURConstraint constraint = (PrerequisiteURConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+		PrerequisiteURConstraint constraint = (PrerequisiteURConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getPrerequisiteURConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryRoleConstraint_Left(), role1);
@@ -356,44 +373,48 @@ public class PolicyModifier {
 		return constraint;
 	}
 
-	public PrerequisiteUDConstraint addPrerequisiteUDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2) throws ModelManipulationException {
-		PrerequisiteUDConstraint constraint = (PrerequisiteUDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public PrerequisiteUDConstraint addPrerequisiteUDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2, TemporalContext context) throws ModelManipulationException {
+		PrerequisiteUDConstraint constraint = (PrerequisiteUDConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getPrerequisiteUDConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Left(), demarcation1);
 		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Right(), demarcation2);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
 		return constraint;
 	}
 
-	public PrerequisiteUPConstraint addPrerequisiteUPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
-		PrerequisiteUPConstraint constraint = (PrerequisiteUPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public PrerequisiteUPConstraint addPrerequisiteUPConstraint(String name, Permission permission1, Permission permission2, TemporalContext context) throws ModelManipulationException {
+		PrerequisiteUPConstraint constraint = (PrerequisiteUPConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getPrerequisiteUPConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
 		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Right(), permission2);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
 		return constraint;
 	}
 
-	public PrerequisiteRDConstraint addPrerequisiteRDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2) throws ModelManipulationException {
-		PrerequisiteRDConstraint constraint = (PrerequisiteRDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public PrerequisiteRDConstraint addPrerequisiteRDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2, TemporalContext context) throws ModelManipulationException {
+		PrerequisiteRDConstraint constraint = (PrerequisiteRDConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getPrerequisiteRDConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Left(), demarcation1);
 		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Right(), demarcation2);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
 		return constraint;
 	}
 
-	public PrerequisiteRPConstraint addPrerequisiteRPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
-		PrerequisiteRPConstraint constraint = (PrerequisiteRPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public PrerequisiteRPConstraint addPrerequisiteRPConstraint(String name, Permission permission1, Permission permission2, TemporalContext context) throws ModelManipulationException {
+		PrerequisiteRPConstraint constraint = (PrerequisiteRPConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getPrerequisiteRPConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
 		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Right(), permission2);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
 		return constraint;
 	}
 
 	public PrerequisiteDPConstraint addPrerequisiteDPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
-		PrerequisiteDPConstraint constraint = (PrerequisiteDPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+		PrerequisiteDPConstraint constraint = (PrerequisiteDPConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getPrerequisiteDPConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
@@ -401,8 +422,10 @@ public class PolicyModifier {
 		return constraint;
 	}
 
+	// ---------- Add / Remove BoD constraints ----------
+
 	public BoDURConstraint addBoDURConstraint(String name, Role role1, Role role2) throws ModelManipulationException {
-		BoDURConstraint constraint = (BoDURConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+		BoDURConstraint constraint = (BoDURConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getBoDURConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryRoleConstraint_Left(), role1);
@@ -410,44 +433,48 @@ public class PolicyModifier {
 		return constraint;
 	}
 
-	public BoDUDConstraint addBoDUDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2) throws ModelManipulationException {
-		BoDUDConstraint constraint = (BoDUDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public BoDUDConstraint addBoDUDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2, TemporalContext context) throws ModelManipulationException {
+		BoDUDConstraint constraint = (BoDUDConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getBoDUDConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Left(), demarcation1);
 		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Right(), demarcation2);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
 		return constraint;
 	}
 
-	public BoDUPConstraint addBoDUPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
-		BoDUPConstraint constraint = (BoDUPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public BoDUPConstraint addBoDUPConstraint(String name, Permission permission1, Permission permission2, TemporalContext context) throws ModelManipulationException {
+		BoDUPConstraint constraint = (BoDUPConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getBoDUPConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
 		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Right(), permission2);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
 		return constraint;
 	}
 
-	public BoDRDConstraint addBoDRDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2) throws ModelManipulationException {
-		BoDRDConstraint constraint = (BoDRDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public BoDRDConstraint addBoDRDConstraint(String name, Demarcation demarcation1, Demarcation demarcation2, TemporalContext context) throws ModelManipulationException {
+		BoDRDConstraint constraint = (BoDRDConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getBoDRDConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Left(), demarcation1);
 		manipulation.set(constraint, ePackage.getBinaryDemarcationConstraint_Right(), demarcation2);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
 		return constraint;
 	}
 
-	public BoDRPConstraint addBoDRPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
-		BoDRPConstraint constraint = (BoDRPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public BoDRPConstraint addBoDRPConstraint(String name, Permission permission1, Permission permission2, TemporalContext context) throws ModelManipulationException {
+		BoDRPConstraint constraint = (BoDRPConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getBoDRPConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
 		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Right(), permission2);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
 		return constraint;
 	}
 
 	public BoDDPConstraint addBoDDPConstraint(String name, Permission permission1, Permission permission2) throws ModelManipulationException {
-		BoDDPConstraint constraint = (BoDDPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+		BoDDPConstraint constraint = (BoDDPConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getBoDDPConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getBinaryPermissionConstraint_Left(), permission1);
@@ -455,8 +482,10 @@ public class PolicyModifier {
 		return constraint;
 	}
 
+	// ---------- Add / Remove Cardinality constraints ----------
+
 	public CardinalityURConstraint addCardinalityURConstraint(String name, Role role, int bound) throws ModelManipulationException {
-		CardinalityURConstraint constraint = (CardinalityURConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+		CardinalityURConstraint constraint = (CardinalityURConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getCardinalityURConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getUnaryRoleConstraint_Role(), role);
@@ -464,44 +493,49 @@ public class PolicyModifier {
 		return constraint;
 	}
 
-	public CardinalityUDConstraint addCardinalityUDConstraint(String name, Demarcation demarcation, int bound) throws ModelManipulationException {
-		CardinalityUDConstraint constraint = (CardinalityUDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public CardinalityUDConstraint addCardinalityUDConstraint(String name, Demarcation demarcation, int bound, TemporalContext context) throws ModelManipulationException {
+		CardinalityUDConstraint constraint = (CardinalityUDConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getCardinalityUDConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getUnaryDemarcationConstraint_Demarcation(), demarcation);
 		manipulation.set(constraint, ePackage.getCardinalityUDConstraint_Bound(), bound);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
+
 		return constraint;
 	}
 
-	public CardinalityUPConstraint addCardinalityUPConstraint(String name, Permission permission, int bound) throws ModelManipulationException {
-		CardinalityUPConstraint constraint = (CardinalityUPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public CardinalityUPConstraint addCardinalityUPConstraint(String name, Permission permission, int bound, TemporalContext context) throws ModelManipulationException {
+		CardinalityUPConstraint constraint = (CardinalityUPConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getCardinalityUPConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getUnaryPermissionConstraint_Permission(), permission);
 		manipulation.set(constraint, ePackage.getCardinalityUPConstraint_Bound(), bound);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
 		return constraint;
 	}
 
-	public CardinalityRDConstraint addCardinalityRDConstraint(String name, Demarcation demarcation, int bound) throws ModelManipulationException {
-		CardinalityRDConstraint constraint = (CardinalityRDConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public CardinalityRDConstraint addCardinalityRDConstraint(String name, Demarcation demarcation, int bound, TemporalContext context) throws ModelManipulationException {
+		CardinalityRDConstraint constraint = (CardinalityRDConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getCardinalityRDConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getUnaryDemarcationConstraint_Demarcation(), demarcation);
 		manipulation.set(constraint, ePackage.getCardinalityRDConstraint_Bound(), bound);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
 		return constraint;
 	}
 
-	public CardinalityRPConstraint addCardinalityRPConstraint(String name, Permission permission, int bound) throws ModelManipulationException {
-		CardinalityRPConstraint constraint = (CardinalityRPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+	public CardinalityRPConstraint addCardinalityRPConstraint(String name, Permission permission, int bound, TemporalContext context) throws ModelManipulationException {
+		CardinalityRPConstraint constraint = (CardinalityRPConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getCardinalityRPConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getUnaryPermissionConstraint_Permission(), permission);
 		manipulation.set(constraint, ePackage.getCardinalityRPConstraint_Bound(), bound);
+		manipulation.set(constraint, ePackage.getAuthorizationConstraint_TemporalContext(), context);
 		return constraint;
 	}
 
 	public CardinalityDPConstraint addCardinalityDPConstraint(String name, Permission permission, int bound) throws ModelManipulationException {
-		CardinalityDPConstraint constraint = (CardinalityDPConstraint) manipulation.createChild(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(),
+		CardinalityDPConstraint constraint = (CardinalityDPConstraint) manipulation.createChild(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(),
 				ePackage.getCardinalityDPConstraint());
 		manipulation.set(constraint, ePackage.getAuthorizationConstraint_Name(), name);
 		manipulation.set(constraint, ePackage.getUnaryPermissionConstraint_Permission(), permission);
@@ -510,11 +544,11 @@ public class PolicyModifier {
 	}
 
 	public void removeAuthorizationConstraint(AuthorizationConstraint constraint) throws ModelManipulationException {
-		manipulation.remove(securityPolicy, ePackage.getSecurityPolicy_AuthorizationConstraints(), constraint);
+		manipulation.remove(system, ePackage.getSiteAccessControlSystem_AuthorizationConstraints(), constraint);
 	}
 
-	public SecurityPolicy getSecurityPolicy() {
-		return securityPolicy;
+	public SiteAccessControlSystem getSystem() {
+		return system;
 	}
 
 	public Resource getResource() {

@@ -9,6 +9,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <properties>
+        <jackson.version>2.10.0</jackson.version>
+    </properties>
+
     <artifactId>com.vanderhighway.trbac.generators</artifactId>
     <dependencies>
         <dependency>
@@ -16,6 +20,11 @@
             <artifactId>com.vanderhighway.trbac.core</artifactId>
             <version>0.20.0-SNAPSHOT</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
     </dependencies>
 

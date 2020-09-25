@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CoreUtils {
 
@@ -25,12 +26,19 @@ public class CoreUtils {
         this.instanceIDCounter = new HashMap<>();
     }
     
-    public void addMissingDaySchedules(Resource resource, SecurityPolicy policy, String startDateString, String endDateString) throws ModelManipulationException, ParseException {
+    public void addMissingDaySchedules(Resource resource, SiteAccessControlSystem system) throws ModelManipulationException, ParseException {
 
         Map<String, DayOfWeekSchedule> dayOfWeekScheduleMap = new HashMap<>();
         Map<String, Map<Integer, DayOfMonthSchedule>> dayOfMonthScheduleMap = new HashMap();
-        Schedule schedule = policy.getSchedule();
+        Map<String, DayOfWeekMonthSchedule> dayOfWeekMonthScheduleMap = new HashMap();
+
+        Schedule schedule = system.getSchedule();
         TemporalContext alwaysTC = (TemporalContext) resource.getEObject("Always");
+
+        Set<DayOfYearSchedule> dateSchedules = schedule.getDaySchedules().stream()
+                .filter(x -> x instanceof DayOfYearSchedule)
+                .map(x -> (DayOfYearSchedule) x) //otherwise the compiler complains
+                .collect(Collectors.toSet());
 
         List<String> allDays = Arrays.asList("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday");
         for (String day: allDays) {
@@ -64,22 +72,32 @@ public class CoreUtils {
             }
         }
 
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-        Date startDate = formatter.parse(startDateString);
-        Date endDate = formatter.parse(endDateString);
-        LocalDate start = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate end = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        for (LocalDate date = start; date.isBefore(end); date = date.plusDays(1)) {
-            DayOfWeekSchedule weekSchedule = dayOfWeekScheduleMap.get(allDays.get(date.getDayOfWeek().getValue()-1));
-            DayOfMonthSchedule monthSchedule = dayOfMonthScheduleMap.get(months.get(date.getMonthValue() - 1)).get(date.getDayOfMonth() - 1);
-
-            DayOfYearSchedule ys;
-            String name = weekSchedule.getName() + "_" + monthSchedule.getName() + "_" + date.getYear();
-            if(resource.getEObject(name) == null) {
-                ys = addDayOfYearScheduleCore(schedule, weekSchedule, monthSchedule, name);
-            } else {
-                ys = (DayOfYearSchedule) resource.getEObject(name);
+        for (int monthIndex = 0; monthIndex < months.size(); monthIndex++) {
+            for (int dayIndex = 0; dayIndex < monthDays.get(monthIndex); dayIndex++) {
+                DayOfMonthSchedule monthSchedule = dayOfMonthScheduleMap.get(months.get(monthIndex)).get(dayIndex);
+                for (String day : allDays) {
+                    DayOfWeekSchedule weekSchedule = dayOfWeekScheduleMap.get(day);
+                    DayOfWeekMonthSchedule wms;
+                    String name = weekSchedule.getName() + "_" + (dayIndex+1) + "_" + months.get(monthIndex);
+                    if(resource.getEObject(name) == null) {
+                        wms = addDayOfWeekMonthScheduleCore(schedule, weekSchedule, monthSchedule, name);
+                    } else {
+                        wms = (DayOfWeekMonthSchedule) resource.getEObject(name);
+                        if(wms.getDayOfWeekSchedule() == null) {
+                            wms.setDayOfWeekSchedule(weekSchedule);
+                        }
+                        if(wms.getDayOfMonthSchedule() == null) {
+                            wms.setDayOfMonthSchedule(monthSchedule);
+                        }
+                    }
+                    dayOfWeekMonthScheduleMap.put(name, wms);
+                    addTemporalContextInstanceCore(schedule, alwaysTC, wms, new IntegerInterval(0, 1439));
+                    addDayScheduleTimeRangeCore(wms, new IntegerInterval(0, 1439));
+                }
             }
+        }
+
+        for(DayOfYearSchedule ys: dateSchedules) {
             addTemporalContextInstanceCore(schedule, alwaysTC, ys, new IntegerInterval(0, 1439));
             addDayScheduleTimeRangeCore(ys, new IntegerInterval(0, 1439));
         }
@@ -98,11 +116,20 @@ public class CoreUtils {
         schedule.getDaySchedules().add(dm);
         return dm;
     }
-    public DayOfYearSchedule addDayOfYearScheduleCore(Schedule schedule, DayOfWeekSchedule weekSchedule, DayOfMonthSchedule monthSchedule, String name) throws ModelManipulationException {
+
+    public DayOfWeekMonthSchedule addDayOfWeekMonthScheduleCore(Schedule schedule, DayOfWeekSchedule weekSchedule, DayOfMonthSchedule monthSchedule, String name) throws ModelManipulationException {
+        DayOfWeekMonthSchedule dwm = (DayOfWeekMonthSchedule) EcoreUtil.create(ePackage.getDayOfWeekMonthSchedule());
+        dwm.setName(name);
+        dwm.setDayOfWeekSchedule(weekSchedule);
+        dwm.setDayOfMonthSchedule(monthSchedule);
+        schedule.getDaySchedules().add(dwm);
+        return dwm;
+    }
+
+    public DayOfYearSchedule addDayOfYearScheduleCore(Schedule schedule, DayOfWeekMonthSchedule dayOfWeekMonthSchedule, String name) throws ModelManipulationException {
         DayOfYearSchedule dy = (DayOfYearSchedule) EcoreUtil.create(ePackage.getDayOfYearSchedule());
         dy.setName(name);
-        dy.setDayOfWeekSchedule(weekSchedule);
-        dy.setDayOfMonthSchedule(monthSchedule);
+        dy.setDayOfWeekMonthSchedule(dayOfWeekMonthSchedule);
         schedule.getDaySchedules().add(dy);
         return dy;
     }

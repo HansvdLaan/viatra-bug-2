@@ -43,6 +43,7 @@ import picocli.shell.jline3.PicocliCommands;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
@@ -67,7 +68,7 @@ public class PolicyValidatorCLI {
     /**
      * Top-level command that just prints help.
      */
-    @Command(name = "",
+    @Command(sortOptions = false, name = "",
             description = {
                     "Example interactive shell with completion and autosuggestions. " +
                             "Hit @|magenta <TAB>|@ to see available commands.",
@@ -94,7 +95,7 @@ public class PolicyValidatorCLI {
     /**
      * A command with some options to demonstrate completion.
      */
-    @Command(name = "cmd", mixinStandardHelpOptions = true, version = "1.0",
+    @Command(sortOptions = false, name = "cmd",mixinStandardHelpOptions = true, version = "0.2",
             description = {"Command with some options to demonstrate TAB-completion.",
                     " (Note that enum values also get completed.)"},
             subcommands = {CommandLine.HelpCommand.class})
@@ -131,28 +132,28 @@ public class PolicyValidatorCLI {
         }
     }
 
-//    @Command(name = "nested", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+//    @Command(sortOptions = false, name = "nested",mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
 //            description = "Hosts more sub-subcommands")
 //    static class Nested implements Runnable {
 //        public void run() {
 //            System.out.println("I'm a nested subcommand. I don't do much, but I have sub-subcommands!");
 //        }
 //
-//        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+//        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
 //                description = "Multiplies two numbers.")
 //        public void multiply(@Option(names = {"-l", "--left"}, required = true) int left,
 //                             @Option(names = {"-r", "--right"}, required = true) int right) {
 //            System.out.printf("%d * %d = %d%n", left, right, left * right);
 //        }
 //
-//        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+//        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
 //                description = "Adds two numbers.")
 //        public void add(@Option(names = {"-l", "--left"}, required = true) int left,
 //                        @Option(names = {"-r", "--right"}, required = true) int right) {
 //            System.out.printf("%d + %d = %d%n", left, right, left + right);
 //        }
 //
-//        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+//        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
 //                description = "Subtracts two numbers.")
 //        public void subtract(@Option(names = {"-l", "--left"}, required = true) int left,
 //                             @Option(names = {"-r", "--right"}, required = true) int right) {
@@ -163,7 +164,7 @@ public class PolicyValidatorCLI {
     /**
      * Command that clears the screen.
      */
-    @Command(name = "cls", aliases = "clear", mixinStandardHelpOptions = true,
+    @Command(sortOptions = false, name = "cls", aliases = "clear",mixinStandardHelpOptions = true,
             description = "Clears the screen", version = "1.0")
     static class ClearScreen implements Callable<Void> {
 
@@ -234,12 +235,13 @@ public class PolicyValidatorCLI {
                     " |  __/ (_) | | | (__| |_| | |___| | | |  __/ (__|   <  __/ |   \n" +
                     " |_|   \\___/|_|_|\\___|\\__, |\\____|_| |_|\\___|\\___|_|\\_\\___|_|   \n" +
                     "                      |___/                                     ");
-            System.out.println("version 0.0.1");
+            System.out.println("version 1.0.2");
 
             //URI uri = URI.createFileURI("models/basic/intervals.trbac");
             //URI uri = URI.createFileURI("empty_policy_all_schedules.trbac");
-            URI uri = URI.createFileURI("empty_policy_trebla.trbac");
+            //URI uri = URI.createFileURI("performance_case.trbac");
             //URI uri = URI.createFileURI("simple_company.trbac");
+            URI uri = URI.createFileURI(args[0]);
 
             Spinner fileLoadSpinner = new Spinner("Loading Policy Model... (" + uri.toString() + ") ");
             new Thread(fileLoadSpinner).start();
@@ -254,10 +256,10 @@ public class PolicyValidatorCLI {
 
             fileLoadSpinner.stop();
 
-            Spinner xSpinner = new Spinner("Adding Missing Schedules and Temporal Context Instances... ");
+            Spinner xSpinner = new Spinner("Adding Omitted Schedules and Temporal Context Instances... ");
             new Thread(xSpinner).start();
             CoreUtils coteUtils = new CoreUtils();
-            coteUtils.addMissingDaySchedules(resource, (SecurityPolicy) resource.getContents().get(0), "2020-01-01", "2030-01-01");
+            coteUtils.addMissingDaySchedules(resource, (SiteAccessControlSystem) resource.getContents().get(0));
             xSpinner.stop();
 
             Spinner queryEngineSpinner = new Spinner("Initializing Query Engine... ");
@@ -275,14 +277,13 @@ public class PolicyValidatorCLI {
 
             queryEngineSpinner.stop();
 
-
             Spinner modelModifiersSpinner = new Spinner("Initializing Policy Model Modifiers... ");
             new Thread(modelModifiersSpinner).start();
 
-            PolicyModifier modifier = new PolicyModifier(engine, (SecurityPolicy) resource.getContents().get(0), resource);
+            PolicyModifier modifier = new PolicyModifier(engine, (SiteAccessControlSystem) resource.getContents().get(0), resource);
             modifier.setInstanceIDCounter(coteUtils.getInstanceIDCounter());
             CLIContainer.getInstance().setModifier(modifier);
-            PolicyAutomaticModifier automaticModifier = new PolicyAutomaticModifier(engine, modifier, (SecurityPolicy) resource.getContents().get(0));
+            PolicyAutomaticModifier automaticModifier = new PolicyAutomaticModifier(engine, modifier, (SiteAccessControlSystem) resource.getContents().get(0));
             CLIContainer.getInstance().setAutomaticModifier(automaticModifier);
 
             automaticModifier.initialize();
@@ -297,6 +298,8 @@ public class PolicyValidatorCLI {
             PolicyValidator validator = new PolicyValidator(engine);
             validator.addChangeListeners(engine, false);
             CLIContainer.getInstance().setValidator(validator);
+
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
 
             checkerSpinner.stop();
             System.out.printf("\u0008");
@@ -327,7 +330,7 @@ public class PolicyValidatorCLI {
         }
     }
 
-    @Command(name = "name of entity commands",
+    @Command(sortOptions = false, name = "name of entity commands",
             description = {
                     "description of entity commands"},
             footer = {"", "Press Ctl-D to exit."},
@@ -349,101 +352,114 @@ public class PolicyValidatorCLI {
         }
     }
 
-    @Command(name = "add", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class, AddConstraint.class},
+    @Command(sortOptions = false, name = "add",mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class, AddConstraint.class},
             description = "add a model entity")
     static class AddCommand implements Runnable {
 
         public void run() {
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Add a user")
-        public void user(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+        public void user(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             CLIContainer.getInstance().getModifier().addUser(name);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Add a role")
         public void role(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
             CLIContainer.getInstance().getModifier().addRole(name);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Add a demarcation")
         public void demarcation(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
             CLIContainer.getInstance().getModifier().addDemarcation(name);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Add a permission")
         public void permission(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
             CLIContainer.getInstance().getModifier().addPermission(name);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
-                description = "Add a building")
-        public void building(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
-            CLIContainer.getInstance().getModifier().addBuilding(name);
-        }
-
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Add a security zone")
         public void securityzone(@Option(names = {"-building"}, required = true) String buildingName,
                                  @Option(names = {"-name"}, required = true) String name,
                                  @Option(names = {"-public"}, required = false) boolean isPublic) throws ModelManipulationException {
-            Building building = (Building) CLIContainer.getInstance().getModel().getEObject(buildingName);
-            CLIContainer.getInstance().getModifier().addSecurityZone(building, name, isPublic);
+            CLIContainer.getInstance().getModifier().addSecurityZone(name, isPublic);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Add a temporal context")
         public void temporalcontext(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
             CLIContainer.getInstance().getModifier().addTemporalContext(name);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Add a temporal context instance")
         public void temporalcontextinstance(@Option(names = {"-context"}, required = true) String temporalContextName,
                                              @Option(names = {"-day"}, required = true) String dayScheduleName,
                                              @Option(names = {"-start"}, required = true) String startTime,
                                              @Option(names = {"-end"}, required = true) String endTime
                                              ) throws ModelManipulationException, ParseException {
-            TemporalContext context = (TemporalContext) CLIContainer.getInstance().getModel().getEObject(temporalContextName);
+            TemporalContext context = (TemporalContext) CLIContainer.getInstance().getElement(temporalContextName, TemporalContext.class);
             if(context == null) {System.out.println("Unkown temporal context: " + context); return;}
 
             if(dayScheduleName.split("_").length == 3) {
-                dayScheduleName = addDayToDateString(dayScheduleName);
+                DateFormat format = new SimpleDateFormat("EEEE_d_MMMM", Locale.ENGLISH);
+                try {
+                    format.parse(dayScheduleName);
+
+                } catch (ParseException pe) {
+                    dayScheduleName = addDayToDateString(dayScheduleName);
+                    // Do nothing. Apparently, there is no cleaner way to check if the format is respected.
+                }
             }
+
             DaySchedule daySchedule = (DaySchedule) CLIContainer.getInstance().getModel().getEObject(dayScheduleName);
+            if(daySchedule == null) {
+                if(dayScheduleName.split("_").length == 4) {
+                    DayOfWeekMonthSchedule wmSchedule = (DayOfWeekMonthSchedule) CLIContainer.getInstance().getElement(
+                            dayScheduleName.split("_")[0]
+                                    + "_" + dayScheduleName.split("_")[1]
+                                    + "_" + dayScheduleName.split("_")[2],
+                            DayOfWeekMonthSchedule.class
+                    );
+                    daySchedule = CLIContainer.getInstance().getModifier().addDayOfYearSchedule(wmSchedule, dayScheduleName);
+                    CLIContainer.getInstance().getModifier().addDayScheduleTimeRange(daySchedule, new IntegerInterval(0, 1439));
+                }
+            }
 
             CLIContainer.getInstance().getModifier().addTemporalContextInstance(context, daySchedule, new IntegerInterval(toMinutes(startTime), toMinutes(endTime)));
             CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Add a temporal grant rule")
         public void temporalgrantrule(
                 @Option(names = {"-name"}, required = true) String ruleName,
                 @Option(names = {"-context"}, required = true) String temporalContextName,
                 @Option(names = {"-role"}, required = true) String roleName,
-                @Option(names = {"-demarcation"}, required = true) String demarcationName,
+                @Option(names = {"-dem"}, required = true) String demarcationName,
                 @Option(names = {"-command"}, required = true) String commandName,
                 @Option(names = {"-priority"}, required = true) int priority
         ) throws ModelManipulationException {
-            TemporalContext context = (TemporalContext) CLIContainer.getInstance().getModel().getEObject(temporalContextName);
-            Role role = (Role) CLIContainer.getInstance().getModel().getEObject(roleName);
-            Demarcation demarcation = (Demarcation) CLIContainer.getInstance().getModel().getEObject(demarcationName);
+            TemporalContext context = (TemporalContext) CLIContainer.getInstance().getElement(temporalContextName, TemporalContext.class);
+            Role role = (Role) CLIContainer.getInstance().getElement(roleName, Role.class);
+            Demarcation demarcation = (Demarcation) CLIContainer.getInstance().getElement(demarcationName, Demarcation.class);
             if(commandName.toLowerCase().equals("grant")) {
                 CLIContainer.getInstance().getModifier().addTemporalGrantRule(context, ruleName, role, demarcation, true, priority);
             } else if(commandName.toLowerCase().equals("revoke")) {
                 CLIContainer.getInstance().getModifier().addTemporalGrantRule(context, ruleName, role, demarcation, false, priority);
             } else {
-                System.out.println("Command should either be \"grant\" or \"revoke\", not" + commandName);
+                System.out.println("Command should either be \"grant\" or \"revoke\", not " + commandName);
             }
         }
     }
 
-    @Command(name = "remove", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+    @Command(sortOptions = false, name = "remove",mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
             description = "remove a model entity")
     static class RemoveCommand implements Runnable {
 
@@ -451,118 +467,118 @@ public class PolicyValidatorCLI {
             System.out.println("I'm a nested subcommand. I don't do much, but I have sub-subcommands!");
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a user")
         public void user(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
-            User user = (User) CLIContainer.getInstance().getModel().getEObject(name);
+            User user = (User) CLIContainer.getInstance().getElement(name, User.class);
             CLIContainer.getInstance().getModifier().removeUser(user);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a role")
         public void role(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
-            Role role = (Role) CLIContainer.getInstance().getModel().getEObject(name);
+            Role role = (Role) CLIContainer.getInstance().getElement(name, Role.class);
             CLIContainer.getInstance().getModifier().removeRole(role);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a demarcation")
         public void demarcation(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
-            Demarcation demarcation = (Demarcation) CLIContainer.getInstance().getModel().getEObject(name);
+            Demarcation demarcation = (Demarcation) CLIContainer.getInstance().getElement(name, Demarcation.class);
             CLIContainer.getInstance().getModifier().removeDemarcation(demarcation);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a permission")
         public void permission(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
-            Permission permission = (Permission) CLIContainer.getInstance().getModel().getEObject(name);
+            Permission permission = (Permission) CLIContainer.getInstance().getElement(name, Permission.class);
             CLIContainer.getInstance().getModifier().removePermission(permission);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
-                description = "Remove a building")
-        public void building(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
-            Building building = (Building) CLIContainer.getInstance().getModel().getEObject(name);
-            CLIContainer.getInstance().getModifier().removeBuilding(building);
-        }
-
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a security zone")
         public void securityzone(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
-            SecurityZone securityZone = (SecurityZone) CLIContainer.getInstance().getModel().getEObject(name);
+            SecurityZone securityZone = (SecurityZone) CLIContainer.getInstance().getElement(name, SecurityZone.class);
             CLIContainer.getInstance().getModifier().removeSecurityZone(securityZone);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a temporal context")
         public void temporalcontext(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
-            TemporalContext context = (TemporalContext) CLIContainer.getInstance().getModel().getEObject(name);
+            TemporalContext context = (TemporalContext) CLIContainer.getInstance().getElement(name, TemporalContext.class);
             CLIContainer.getInstance().getModifier().removeTemporalContext(context);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a temporal context instance")
         public void temporalcontextinstance(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
-            TimeRange timeRange = (TimeRange) CLIContainer.getInstance().getModel().getEObject(name);
+            TimeRange timeRange = (TimeRange) CLIContainer.getInstance().getElement(name, TimeRange.class);
             CLIContainer.getInstance().getModifier().removeTemporalContextInstance(timeRange);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a temporal grant rule")
         public void temporalgrantrule(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
-            TemporalGrantRule rule = (TemporalGrantRule) CLIContainer.getInstance().getModel().getEObject(name);
+            TemporalGrantRule rule = (TemporalGrantRule) CLIContainer.getInstance().getElement(name, TemporalGrantRule.class);
             CLIContainer.getInstance().getModifier().removeTemporalGrantRule(rule);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Remove a temporal grant rule")
+        public void temporalauthenticationrule(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+            TemporalAuthenticationRule rule = (TemporalAuthenticationRule) CLIContainer.getInstance().getElement(name, TemporalAuthenticationRule.class);
+            CLIContainer.getInstance().getModifier().removeTemporalAuthenticationRule(rule);
+        }
+
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a temporal grant rule")
         public void constraint(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
-            AuthorizationConstraint constraint = (AuthorizationConstraint) CLIContainer.getInstance().getModel().getEObject(name);
+            AuthorizationConstraint constraint = (AuthorizationConstraint) CLIContainer.getInstance().getElement(name, AuthorizationConstraint.class);
             CLIContainer.getInstance().getModifier().removeAuthorizationConstraint(constraint);
         }
     }
 
-    @Command(name = "assign", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+    @Command(sortOptions = false, name = "assign",mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
             description = "assign entities")
     static class AssignCommand implements Runnable {
 
         public void run() {
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Assign a role to a user")
         public void UR(@Option(names = {"-user"}, required = true) String userName,
                        @Option(names = {"-role"}, required = true) String roleName) throws ModelManipulationException {
-            User user = (User) CLIContainer.getInstance().getModel().getEObject(userName);
-            Role role = (Role) CLIContainer.getInstance().getModel().getEObject(roleName);
+            User user = (User) CLIContainer.getInstance().getElement(userName, User.class);
+            Role role = (Role) CLIContainer.getInstance().getElement(roleName, Role.class);
             CLIContainer.getInstance().getModifier().assignRoleToUser(user, role);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Assign a permission to a demarcation")
-        public void DP(@Option(names = {"-demarcation"}, required = true) String demarcationName,
+        public void DP(@Option(names = {"-dem"}, required = true) String demarcationName,
                        @Option(names = {"-permission"}, required = true) String permissionName) throws ModelManipulationException {
-            Demarcation demarcation = (Demarcation) CLIContainer.getInstance().getModel().getEObject(demarcationName);
-            Permission permission = (Permission) CLIContainer.getInstance().getModel().getEObject(permissionName);
+            Demarcation demarcation = (Demarcation) CLIContainer.getInstance().getElement(demarcationName, Demarcation.class);
+            Permission permission = (Permission) CLIContainer.getInstance().getElement(permissionName, Permission.class);
             CLIContainer.getInstance().getModifier().assignPermissionToDemarcation(demarcation, permission);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Assign an object to a permission")
         public void PO(@Option(names = {"-permission"}, required = true) String permissionName,
                        @Option(names = {"-object"}, required = true) String objectName) throws ModelManipulationException {
-            Permission permission = (Permission) CLIContainer.getInstance().getModel().getEObject(permissionName);
-            SecurityZone securityZone = (SecurityZone) CLIContainer.getInstance().getModel().getEObject(objectName);
+            Permission permission = (Permission) CLIContainer.getInstance().getElement(permissionName, Permission.class);
+            SecurityZone securityZone = (SecurityZone) CLIContainer.getInstance().getElement(objectName, SecurityZone.class);
             CLIContainer.getInstance().getModifier().assignObjectToPermission(permission, securityZone);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Set reachability between two zones")
         public void reachability(@Option(names = {"-from"}, required = true) String fromZoneName,
                                  @Option(names = {"-to"}, required = true) String toZoneName,
                                  @Option(names = {"-bidirectional"}, required = false) boolean isBirectional) throws ModelManipulationException {
-            SecurityZone fromSecurityZone = (SecurityZone) CLIContainer.getInstance().getModel().getEObject(fromZoneName);
-            SecurityZone toSecurityZone = (SecurityZone) CLIContainer.getInstance().getModel().getEObject(toZoneName);
+            SecurityZone fromSecurityZone = (SecurityZone) CLIContainer.getInstance().getElement(fromZoneName, SecurityZone.class);
+            SecurityZone toSecurityZone = (SecurityZone) CLIContainer.getInstance().getElement(toZoneName, SecurityZone.class);
             if (isBirectional) {
                 CLIContainer.getInstance().getModifier().setBidirectionalReachability(fromSecurityZone, toSecurityZone);
             } else {
@@ -570,65 +586,65 @@ public class PolicyValidatorCLI {
             }
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Set inheritance between two roles")
         public void role_inheritance(@Option(names = {"-junior"}, required = true) String juniorRoleName,
                                      @Option(names = {"-senior"}, required = true) String seniorRoleName) throws ModelManipulationException {
-            Role juniorRole = (Role) CLIContainer.getInstance().getModel().getEObject(juniorRoleName);
-            Role seniorRole = (Role) CLIContainer.getInstance().getModel().getEObject(seniorRoleName);
+            Role juniorRole = (Role) CLIContainer.getInstance().getElement(juniorRoleName, Role.class);
+            Role seniorRole = (Role) CLIContainer.getInstance().getElement(seniorRoleName, Role.class);
             CLIContainer.getInstance().getModifier().addRoleInheritance(juniorRole, seniorRole);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Set inheritance between two demarcations")
         public void demarcation_inheritance(@Option(names = {"-sub"}, required = true) String subDemarcationName,
                                      @Option(names = {"-sup"}, required = true) String supDemarcationName) throws ModelManipulationException {
-            Demarcation subDemarcation = (Demarcation) CLIContainer.getInstance().getModel().getEObject(subDemarcationName);
-            Demarcation supDemarcation = (Demarcation) CLIContainer.getInstance().getModel().getEObject(supDemarcationName);
+            Demarcation subDemarcation = (Demarcation) CLIContainer.getInstance().getElement(subDemarcationName, Demarcation.class);
+            Demarcation supDemarcation = (Demarcation) CLIContainer.getInstance().getElement(supDemarcationName, Demarcation.class);
             CLIContainer.getInstance().getModifier().addDemarcationInheritance(subDemarcation, supDemarcation);
         }
     }
 
-    @Command(name = "deassign", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+    @Command(sortOptions = false, name = "deassign",mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
             description = "deassign entities")
     static class DeassignCommand implements Runnable {
 
         public void run() { }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Assign a role to a user")
         public void UR(@Option(names = {"-user"}, required = true) String userName,
                        @Option(names = {"-role"}, required = true) String roleName) throws ModelManipulationException {
-            User user = (User) CLIContainer.getInstance().getModel().getEObject(userName);
-            Role role = (Role) CLIContainer.getInstance().getModel().getEObject(roleName);
+            User user = (User) CLIContainer.getInstance().getElement(userName, User.class);
+            Role role = (Role) CLIContainer.getInstance().getElement(roleName, Role.class);
             CLIContainer.getInstance().getModifier().deassignRoleFromUser(user, role);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Assign a permission to a demarcation")
-        public void DP(@Option(names = {"-demarcation"}, required = true) String demarcationName,
+        public void DP(@Option(names = {"-dem"}, required = true) String demarcationName,
                        @Option(names = {"-permission"}, required = true) String permissionName) throws ModelManipulationException {
-            Demarcation demarcation = (Demarcation) CLIContainer.getInstance().getModel().getEObject(demarcationName);
-            Permission permission = (Permission) CLIContainer.getInstance().getModel().getEObject(permissionName);
+            Demarcation demarcation = (Demarcation) CLIContainer.getInstance().getElement(demarcationName, Demarcation.class);
+            Permission permission = (Permission) CLIContainer.getInstance().getElement(permissionName, Permission.class);
             CLIContainer.getInstance().getModifier().deassignPermissionFromDemarcation(demarcation, permission);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Assign an object to a permission")
         public void PO(@Option(names = {"-permission"}, required = true) String permissionName,
                        @Option(names = {"-object"}, required = true) String objectName) throws ModelManipulationException {
-            Permission permission = (Permission) CLIContainer.getInstance().getModel().getEObject(permissionName);
-            SecurityZone securityZone = (SecurityZone) CLIContainer.getInstance().getModel().getEObject(objectName);
+            Permission permission = (Permission) CLIContainer.getInstance().getElement(permissionName, Permission.class);
+            SecurityZone securityZone = (SecurityZone) CLIContainer.getInstance().getElement(objectName, SecurityZone.class);
             CLIContainer.getInstance().getModifier().deassignObjectFromPermission(permission, securityZone);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove reachability between two zones")
         public void reachability(@Option(names = {"-from"}, required = true) String fromZoneName,
                                  @Option(names = {"-to"}, required = true) String toZoneName,
                                  @Option(names = {"-bidirectional"}, required = false) boolean isBirectional) throws ModelManipulationException {
-            SecurityZone fromSecurityZone = (SecurityZone) CLIContainer.getInstance().getModel().getEObject(fromZoneName);
-            SecurityZone toSecurityZone = (SecurityZone) CLIContainer.getInstance().getModel().getEObject(toZoneName);
+            SecurityZone fromSecurityZone = (SecurityZone) CLIContainer.getInstance().getElement(fromZoneName, SecurityZone.class);
+            SecurityZone toSecurityZone = (SecurityZone) CLIContainer.getInstance().getElement(toZoneName, SecurityZone.class);
             if(isBirectional) {
                 CLIContainer.getInstance().getModifier().removeBidirectionalReachability(fromSecurityZone, toSecurityZone);
             } else {
@@ -636,26 +652,26 @@ public class PolicyValidatorCLI {
             }
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Set inheritance between two roles")
         public void role_inheritance(@Option(names = {"-junior"}, required = true) String juniorRoleName,
                                      @Option(names = {"-senior"}, required = true) String seniorRoleName) throws ModelManipulationException {
-            Role juniorRole = (Role) CLIContainer.getInstance().getModel().getEObject(juniorRoleName);
-            Role seniorRole = (Role) CLIContainer.getInstance().getModel().getEObject(seniorRoleName);
+            Role juniorRole = (Role) CLIContainer.getInstance().getElement(juniorRoleName, Role.class);
+            Role seniorRole = (Role) CLIContainer.getInstance().getElement(seniorRoleName, Role.class);
             CLIContainer.getInstance().getModifier().removeRoleInheritance(juniorRole, seniorRole);
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Set inheritance between two demarcations")
         public void demarcation_inheritance(@Option(names = {"-sub"}, required = true) String subDemarcationName,
                                             @Option(names = {"-sup"}, required = true) String supDemarcationName) throws ModelManipulationException {
-            Demarcation subDemarcation = (Demarcation) CLIContainer.getInstance().getModel().getEObject(subDemarcationName);
-            Demarcation supDemarcation = (Demarcation) CLIContainer.getInstance().getModel().getEObject(supDemarcationName);
+            Demarcation subDemarcation = (Demarcation) CLIContainer.getInstance().getElement(subDemarcationName, Demarcation.class);
+            Demarcation supDemarcation = (Demarcation) CLIContainer.getInstance().getElement(supDemarcationName, Demarcation.class);
             CLIContainer.getInstance().getModifier().removeDemarcationInheritance(subDemarcation, supDemarcation);
         }
     }
 
-    @Command(name = "show", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+    @Command(sortOptions = false, name = "show",mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
             description = "show stuff")
     static class ShowCommand implements Runnable {
 
@@ -663,157 +679,427 @@ public class PolicyValidatorCLI {
             //System.out.println("I'm a nested subcommand. I don't do much, but I have sub-subcommands!");
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all basic entities and relations (Users, Roles, Demarcations, Permissions, UR, DP)")
         public void basic() throws ModelManipulationException {
+
+            System.out.println("Users:");
+            CLIContainer.getInstance().increaseIndentation();
             users();
+            CLIContainer.getInstance().decreaseIdentation();
+
+            System.out.println("Roles:");
+            CLIContainer.getInstance().increaseIndentation();
             roles();
-            UR();
+            CLIContainer.getInstance().decreaseIdentation();
+
+            System.out.println("UR:");
+            CLIContainer.getInstance().increaseIndentation();
+            UR(null);
+            CLIContainer.getInstance().decreaseIdentation();
+
+            System.out.println("Demarcations:");
+            CLIContainer.getInstance().increaseIndentation();
             demarcations();
+            CLIContainer.getInstance().decreaseIdentation();
+
+            System.out.println("RSD:");
+            CLIContainer.getInstance().increaseIndentation();
+            RSD(null, null);
+            CLIContainer.getInstance().decreaseIdentation();
+
+            System.out.println("Permissions:");
+            CLIContainer.getInstance().increaseIndentation();
             permissions();
-            DP();
+            CLIContainer.getInstance().decreaseIdentation();
+
+            System.out.println("DP:");
+            CLIContainer.getInstance().increaseIndentation();
+            DP(null);
+            CLIContainer.getInstance().decreaseIdentation();
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
-                description = "Show the computed access relation")
-        public void access() throws ModelManipulationException {
-            Set<USP.Match> matches = CLIContainer.getInstance().getEngine().getMatcher(USP.instance()).getAllMatches().stream().collect(Collectors.toSet());
-            Map<String, Map<String, Set<String>>> accessRelation = new HashMap<>();
-            for (USP.Match match: matches){
-                accessRelation.putIfAbsent(match.getUser().getName(), new HashMap<>());
-                accessRelation.get(match.getUser().getName()).putIfAbsent(match.getScenario().toString(), new HashSet<>());
-                accessRelation.get(match.getUser().getName()).get(match.getScenario().toString()).add(match.getPermission().getName());
-            }
-            List<String> sortedUserNames = accessRelation.keySet().stream().sorted().collect(Collectors.toList());
-            for (String userName: sortedUserNames) {
-                System.out.println(userName);
-                List<String> sortedGroupNames = accessRelation.get(userName).keySet().stream().sorted().collect(Collectors.toList());
-                for (String groupName : sortedGroupNames) {
-                    List<String> sortedPermissionNames = accessRelation.get(userName).get(groupName).stream().sorted().collect(Collectors.toList());
-                    System.out.println("\t" + groupName + " -> " + sortedPermissionNames.toString());
-                }
-            }
-        }
-
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all users")
         public void users() throws ModelManipulationException {
-            SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
-            List<String> users = policy.getAuthorizationPolicy().getUsers().stream().map(x -> x.getName()).collect(Collectors.toList());
+            SiteAccessControlSystem system = (SiteAccessControlSystem) CLIContainer.getInstance().getModel().getContents().get(0);
+            List<String> users = system.getAuthorizationPolicy().getUsers().stream().map(x -> x.getName()).collect(Collectors.toList());
             Collections.sort(users);
-            System.out.println("Users:");
             for(String user: users) {
-                System.out.println("\t" + user);
+                System.out.println(CLIContainer.getInstance().getIndentation() + user);
             }
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
-                description = "Show UR")
-        public void UR() throws ModelManipulationException {
-            SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
-            Map<String, Set<String>> UR = new HashMap<>();
-            for (User user: policy.getAuthorizationPolicy().getUsers()) {
-                UR.put(user.getName(), new HashSet<>());
-                for(Role role: user.getUR()) {
-                    UR.get(user.getName()).add(role.getName());
-                }
-            }
-            List<String> sortedUserNames = UR.keySet().stream().sorted().collect(Collectors.toList());
-            System.out.println("UR:");
-            for(String userName: sortedUserNames) {
-                System.out.println("\t" + userName + "->" + UR.get(userName).stream().sorted().collect(Collectors.toList()));
-            }
-        }
-
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all roles")
         public void roles() throws ModelManipulationException {
-            SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
-            List<String> roles = policy.getAuthorizationPolicy().getRoles().stream().map(PolicyValidatorCLI::rolePrettyString).
+            SiteAccessControlSystem system = (SiteAccessControlSystem) CLIContainer.getInstance().getModel().getContents().get(0);
+            List<String> roles = system.getAuthorizationPolicy().getRoles().stream().map(PolicyValidatorCLI::rolePrettyString).
                     sorted().collect(Collectors.toList());
-            System.out.println("Roles:");
             for (String role: roles) {
-                System.out.println("\t" + role);
+                System.out.println(CLIContainer.getInstance().getIndentation() + role);
             }
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
-                description = "Show DP")
-        public void DP() throws ModelManipulationException {
-            SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
-            Map<String, Set<String>> DP = new HashMap<>();
-            for (Demarcation demarcation: policy.getAuthorizationPolicy().getDemarcations()) {
-                DP.put(demarcation.getName(), new HashSet<>());
-                for(Permission permission: demarcation.getDP()) {
-                    DP.get(demarcation.getName()).add(permission.getName());
-                }
-            }
-            List<String> sortedDemarcationNames = DP.keySet().stream().sorted().collect(Collectors.toList());
-            System.out.println("DP:");
-            for(String demarcationName: sortedDemarcationNames) {
-                System.out.println("\t" + demarcationName + "->" + DP.get(demarcationName).stream().sorted().collect(Collectors.toList()));
-            }
-        }
-
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all demarcations")
         public void demarcations() throws ModelManipulationException {
-            SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
-            List<String> demarcations = policy.getAuthorizationPolicy().getDemarcations().stream().map(PolicyValidatorCLI::demarcationPrettyString)
+            SiteAccessControlSystem system = (SiteAccessControlSystem) CLIContainer.getInstance().getModel().getContents().get(0);
+            List<String> demarcations = system.getAuthorizationPolicy().getDemarcations().stream().map(PolicyValidatorCLI::demarcationPrettyString)
                     .collect(Collectors.toList());
             Collections.sort(demarcations);
-            System.out.println("Demarcations:");
             for(String demarcationName: demarcations) {
-                System.out.println("\t" + demarcationName);
+                System.out.println(CLIContainer.getInstance().getIndentation() + demarcationName);
             }
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all permissions")
         public void permissions() throws ModelManipulationException {
-            SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
-            List<String> permissions = policy.getAuthorizationPolicy().getPermissions().stream().map(x -> x.getName()).collect(Collectors.toList());
+            SiteAccessControlSystem system = (SiteAccessControlSystem) CLIContainer.getInstance().getModel().getContents().get(0);
+            List<String> permissions = system.getAuthorizationPolicy().getPermissions().stream().map(x -> x.getName()).collect(Collectors.toList());
             Collections.sort(permissions);
-            System.out.println("Permissions:");
             for(String permission: permissions) {
-                System.out.println("\t" + permission);
+                System.out.println(CLIContainer.getInstance().getIndentation() + permission);
             }
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
-                description = "Show all buildings")
-        public void buildings() throws ModelManipulationException {
-            SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
-            List<String> buildings = policy.getBuildings().stream().map(x -> x.getName()).collect(Collectors.toList());
-            Collections.sort(buildings);
-            System.out.println(buildings);
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Show the roles assigned to one or all users")
+        public void UR(@Option(names = {"-user"}, required = false) String userName) throws ModelManipulationException {
+            List<User> users = new LinkedList<>();
+            if(userName == null) {
+                users = CLIContainer.getInstance().getSystem().getAuthorizationPolicy().getUsers();
+            } else {
+                users.add((User) CLIContainer.getInstance().getElement(userName, User.class));
+            }
+            users = users.stream().sorted(Comparator.comparing(User::getName)).collect(Collectors.toList());
+            for (User user: users) {
+                System.out.println(CLIContainer.getInstance().getIndentation() + user.getName() + "->" +
+                        user.getUR().stream().map(Role::getName).sorted().collect(Collectors.toList()));
+            }
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Show the demarcations granted to users")
+        public void USD(@Option(names = {"-user"}, required = false) String userName,
+                        @Option(names = {"-context"}, split = ",", splitSynopsisLabel = ",", paramLabel = "CONTEXT",
+                                required = false) List<String> contextNames) throws ModelManipulationException {
+            Map<User, Map<Scenario, Set<Demarcation>>> relation = new HashMap<>();
+            User partialMatchUser = null;
+            if(userName != null) {
+                partialMatchUser = (User) CLIContainer.getInstance().getElement(userName, User.class);
+            }
+            Set<TemporalContext> partialTemporalContexts = new HashSet<>();
+            if(contextNames != null) {
+                for (String temporalContextName: contextNames) {
+                    partialTemporalContexts.add((TemporalContext) CLIContainer.getInstance().getElement(temporalContextName, TemporalContext.class));
+                }
+            }
+            USD.Match partialMatch = USD.Matcher.create().newMatch(partialMatchUser, null, null);
+            USD.Matcher matcher = CLIContainer.getInstance().getEngine().getMatcher(USD.instance());
+            Set<USD.Match> matches = new HashSet<>(matcher.getAllMatches(partialMatch));
+            for (USD.Match match: matches){
+                relation.putIfAbsent(match.getUser(), new HashMap<>());
+                if(match.getScenario().containsAll(partialTemporalContexts)) {
+                    relation.get(match.getUser()).putIfAbsent(match.getScenario(), new HashSet<>());
+                    relation.get(match.getUser()).get(match.getScenario()).add(match.getDemarcation());
+                }
+            }
+            List<User> sortedUsers = relation.keySet().stream().sorted(Comparator.comparing(User::getName)).collect(Collectors.toList());
+            for (User user: sortedUsers) {
+                if(sortedUsers.size() != 1) {
+                    System.out.println(CLIContainer.getInstance().getIndentation() + user.getName() + ":");
+                    CLIContainer.getInstance().increaseIndentation();
+                }
+                List<Scenario> sortedScenarios = relation.get(user).keySet().stream().sorted(Comparator.comparing(Scenario::toString)).collect(Collectors.toList());
+                for (Scenario scenario : sortedScenarios) {
+                    List<String> sortedNames = relation.get(user).get(scenario).stream().map(x -> x.getName()).sorted().collect(Collectors.toList());
+                    System.out.println(CLIContainer.getInstance().getIndentation()
+                            + scenario.toString() + " -> " + sortedNames.toString());
+                }
+                if(sortedUsers.size() != 1) {
+                    CLIContainer.getInstance().decreaseIdentation();
+                }
+            }
+        }
+
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Show the permissions granted to users")
+        public void USP(@Option(names = {"-user"}, required = false) String userName,
+                        @Option(names = {"-context"}, split = ",", splitSynopsisLabel = ",", paramLabel = "CONTEXT",
+                                required = false) List<String> contextNames) throws ModelManipulationException {
+            Map<User, Map<Scenario, Set<Permission>>> relation = new HashMap<>();
+            User partialMatchUser = null;
+            if(userName != null) {
+                partialMatchUser = (User) CLIContainer.getInstance().getElement(userName, User.class);
+            }
+            Set<TemporalContext> partialTemporalContexts = new HashSet<>();
+            if(contextNames != null) {
+                for (String temporalContextName: contextNames) {
+                    partialTemporalContexts.add((TemporalContext) CLIContainer.getInstance().getElement(temporalContextName, TemporalContext.class));
+                }
+            }
+            USP.Match partialMatch = USP.Matcher.create().newMatch(partialMatchUser, null, null);
+            USP.Matcher matcher = CLIContainer.getInstance().getEngine().getMatcher(USP.instance());
+            Set<USP.Match> matches = new HashSet<>(matcher.getAllMatches(partialMatch));
+            for (USP.Match match: matches){
+                relation.putIfAbsent(match.getUser(), new HashMap<>());
+                if(match.getScenario().containsAll(partialTemporalContexts)) {
+                    relation.get(match.getUser()).putIfAbsent(match.getScenario(), new HashSet<>());
+                    relation.get(match.getUser()).get(match.getScenario()).add(match.getPermission());
+                }
+            }
+            List<User> sortedUsers = relation.keySet().stream().sorted(Comparator.comparing(User::getName)).collect(Collectors.toList());
+            for (User user: sortedUsers) {
+                if(sortedUsers.size() != 1) {
+                    System.out.println(CLIContainer.getInstance().getIndentation() + user.getName() + ":");
+                    CLIContainer.getInstance().increaseIndentation();
+                }
+                List<Scenario> sortedScenarios = relation.get(user).keySet().stream().sorted(Comparator.comparing(Scenario::toString)).collect(Collectors.toList());
+                for (Scenario scenario : sortedScenarios) {
+                    List<String> sortedNames = relation.get(user).get(scenario).stream().map(x -> x.getName()).sorted().collect(Collectors.toList());
+                    System.out.println(CLIContainer.getInstance().getIndentation()
+                            + scenario.toString() + " -> " + sortedNames.toString());
+                }
+                if(sortedUsers.size() != 1) {
+                    CLIContainer.getInstance().decreaseIdentation();
+                }
+            }
+        }
+
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Show the demarcations granted to roles")
+        public void RSD(@Option(names = {"-role"}, required = false) String roleName,
+                        @Option(names = {"-context"}, split = ",", splitSynopsisLabel = ",", paramLabel = "CONTEXT",
+                                required = false) List<String> contextNames) throws ModelManipulationException {
+            Map<Role, Map<Scenario, Set<Demarcation>>> relation = new HashMap<>();
+            Role partialMatchRole = null;
+            if(roleName != null) {
+                partialMatchRole = (Role) CLIContainer.getInstance().getElement(roleName, Role.class);
+            }
+            Set<TemporalContext> partialTemporalContexts = new HashSet<>();
+            if(contextNames != null) {
+                for (String temporalContextName: contextNames) {
+                    partialTemporalContexts.add((TemporalContext) CLIContainer.getInstance().getElement(temporalContextName, TemporalContext.class));
+                }
+            }
+            RSD.Match partialMatch = RSD.Matcher.create().newMatch(partialMatchRole, null, null);
+            RSD.Matcher matcher = CLIContainer.getInstance().getEngine().getMatcher(RSD.instance());
+            Set<RSD.Match> matches = new HashSet<>(matcher.getAllMatches(partialMatch));
+            for (RSD.Match match: matches){
+                relation.putIfAbsent(match.getRole(), new HashMap<>());
+                if(match.getScenario().containsAll(partialTemporalContexts)) {
+                    relation.get(match.getRole()).putIfAbsent(match.getScenario(), new HashSet<>());
+                    relation.get(match.getRole()).get(match.getScenario()).add(match.getDemarcation());
+                }
+            }
+            List<Role> sortedRoles = relation.keySet().stream().sorted(Comparator.comparing(Role::getName)).collect(Collectors.toList());
+            for (Role role: sortedRoles) {
+                if(sortedRoles.size() != 1) {
+                    System.out.println(CLIContainer.getInstance().getIndentation() + role.getName() + ":");
+                    CLIContainer.getInstance().increaseIndentation();
+                }
+                List<Scenario> sortedScenarios = relation.get(role).keySet().stream().sorted(Comparator.comparing(Scenario::toString)).collect(Collectors.toList());
+                for (Scenario scenario : sortedScenarios) {
+                    List<String> sortedNames = relation.get(role).get(scenario).stream().map(x -> x.getName()).sorted().collect(Collectors.toList());
+                    System.out.println(CLIContainer.getInstance().getIndentation()
+                            + scenario.toString() + " -> " + sortedNames.toString());
+                }
+                if(sortedRoles.size() != 1) {
+                    CLIContainer.getInstance().decreaseIdentation();
+                }
+            }
+        }
+
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Show the demarcations granted to roles")
+        public void RSP(@Option(names = {"-role"}, required = false) String roleName,
+                        @Option(names = {"-context"}, split = ",", splitSynopsisLabel = ",", paramLabel = "CONTEXT",
+                                required = false) List<String> contextNames) throws ModelManipulationException {
+            Map<Role, Map<Scenario, Set<Permission>>> relation = new HashMap<>();
+            Role partialMatchRole = null;
+            if(roleName != null) {
+                partialMatchRole = (Role) CLIContainer.getInstance().getElement(roleName, Role.class);
+            }
+            Set<TemporalContext> partialTemporalContexts = new HashSet<>();
+            if(contextNames != null) {
+                for (String temporalContextName: contextNames) {
+                    partialTemporalContexts.add((TemporalContext) CLIContainer.getInstance().getElement(temporalContextName, TemporalContext.class));
+                }
+            }
+            RSP.Match partialMatch = RSP.Matcher.create().newMatch(partialMatchRole, null, null);
+            RSP.Matcher matcher = CLIContainer.getInstance().getEngine().getMatcher(RSP.instance());
+            Set<RSP.Match> matches = new HashSet<>(matcher.getAllMatches(partialMatch));
+            for (RSP.Match match: matches){
+                relation.putIfAbsent(match.getRole(), new HashMap<>());
+                if(match.getScenario().containsAll(partialTemporalContexts)) {
+                    relation.get(match.getRole()).putIfAbsent(match.getScenario(), new HashSet<>());
+                    relation.get(match.getRole()).get(match.getScenario()).add(match.getPermission());
+                }
+            }
+            List<Role> sortedRoles = relation.keySet().stream().sorted(Comparator.comparing(Role::getName)).collect(Collectors.toList());
+            for (Role role: sortedRoles) {
+                if(sortedRoles.size() != 1) {
+                    System.out.println(CLIContainer.getInstance().getIndentation() + role.getName() + ":");
+                    CLIContainer.getInstance().increaseIndentation();
+                }
+                List<Scenario> sortedScenarios = relation.get(role).keySet().stream().sorted(Comparator.comparing(Scenario::toString)).collect(Collectors.toList());
+                for (Scenario scenario : sortedScenarios) {
+                    List<String> sortedNames = relation.get(role).get(scenario).stream().map(x -> x.getName()).sorted().collect(Collectors.toList());
+                    System.out.println(CLIContainer.getInstance().getIndentation()
+                            + scenario.toString() + " -> " + sortedNames.toString());
+                }
+                if(sortedRoles.size() != 1) {
+                    CLIContainer.getInstance().decreaseIdentation();
+                }
+            }
+        }
+
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Show DP")
+        public void DP(@Option(names = {"-dem"}, required = false) String demarcationName) throws ModelManipulationException {
+            List<Demarcation> demarcations = new LinkedList<>();
+            if(demarcationName == null) {
+                demarcations = CLIContainer.getInstance().getSystem().getAuthorizationPolicy().getDemarcations();
+            } else {
+                demarcations.add((Demarcation) CLIContainer.getInstance().getElement(demarcationName, Demarcation.class));
+            }
+            demarcations = demarcations.stream().sorted(Comparator.comparing(Demarcation::getName)).collect(Collectors.toList());
+            for (Demarcation demarcation: demarcations) {
+                System.out.println(CLIContainer.getInstance().getIndentation() + demarcation.getName() + "->" +
+                        demarcation.getDP().stream().map(Permission::getName).sorted().collect(Collectors.toList()));
+            }
+        }
+
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Show security zones the user is allowed to access")
+        public void USO(@Option(names = {"-user"}, required = false) String userName,
+                        @Option(names = {"-context"}, split = ",", splitSynopsisLabel = ",", paramLabel = "CONTEXT",
+                                required = false) List<String> contextNames) throws ModelManipulationException {
+            Map<User, Map<Scenario, Set<XObject>>> relation = new HashMap<>();
+            User partialMatchUser = null;
+            if(userName != null) {
+                partialMatchUser = (User) CLIContainer.getInstance().getElement(userName, User.class);
+            }
+            Set<TemporalContext> partialTemporalContexts = new HashSet<>();
+            if(contextNames != null) {
+                for (String temporalContextName: contextNames) {
+                    partialTemporalContexts.add((TemporalContext) CLIContainer.getInstance().getElement(temporalContextName, TemporalContext.class));
+                }
+            }
+            USO.Match partialMatch = USO.Matcher.create().newMatch(partialMatchUser, null, null);
+            USO.Matcher matcher = CLIContainer.getInstance().getEngine().getMatcher(USO.instance());
+            Set<USO.Match> matches = new HashSet<>(matcher.getAllMatches(partialMatch));
+            for (USO.Match match: matches){
+                relation.putIfAbsent(match.getUser(), new HashMap<>());
+                if(match.getScenario().containsAll(partialTemporalContexts)) {
+                    relation.get(match.getUser()).putIfAbsent(match.getScenario(), new HashSet<>());
+                    relation.get(match.getUser()).get(match.getScenario()).add(match.getObject());
+                }
+            }
+            List<User> sortedUsers = relation.keySet().stream().sorted(Comparator.comparing(User::getName)).collect(Collectors.toList());
+            for (User user: sortedUsers) {
+                if(sortedUsers.size() != 1) {
+                    System.out.println(CLIContainer.getInstance().getIndentation() + user.getName() + ":");
+                    CLIContainer.getInstance().increaseIndentation();
+                }
+                List<Scenario> sortedScenarios = relation.get(user).keySet().stream().sorted(Comparator.comparing(Scenario::toString)).collect(Collectors.toList());
+                for (Scenario scenario : sortedScenarios) {
+                    List<String> sortedNames = relation.get(user).get(scenario).stream().map(x -> x.getName()).sorted().collect(Collectors.toList());
+                    System.out.println(CLIContainer.getInstance().getIndentation()
+                            + scenario.toString() + " -> " + sortedNames.toString());
+                }
+                if(sortedUsers.size() != 1) {
+                    CLIContainer.getInstance().decreaseIdentation();
+                }
+            }
+        }
+
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Show security zones the user can access")
+        public void access(@Option(names = {"-user"}, required = false) String userName,
+                        @Option(names = {"-context"}, split = ",", splitSynopsisLabel = ",", paramLabel = "CONTEXT",
+                                required = false) List<String> contextNames) throws ModelManipulationException {
+            Map<User, Map<Scenario, Set<XObject>>> relation = new HashMap<>();
+            User partialMatchUser = null;
+            if(userName != null) {
+                partialMatchUser = (User) CLIContainer.getInstance().getElement(userName, User.class);
+            }
+            Set<TemporalContext> partialTemporalContexts = new HashSet<>();
+            if(contextNames != null) {
+                for (String temporalContextName: contextNames) {
+                    partialTemporalContexts.add((TemporalContext) CLIContainer.getInstance().getElement(temporalContextName, TemporalContext.class));
+                }
+            }
+            SecurityZoneAccessible.Match partialMatch = SecurityZoneAccessible.Matcher.create().newMatch(partialMatchUser, null, null);
+            SecurityZoneAccessible.Matcher matcher = CLIContainer.getInstance().getEngine().getMatcher(SecurityZoneAccessible.instance());
+            Set<SecurityZoneAccessible.Match> matches = new HashSet<>(matcher.getAllMatches(partialMatch));
+            for (SecurityZoneAccessible.Match match: matches){
+                relation.putIfAbsent(match.getUser(), new HashMap<>());
+                if(match.getScenario().containsAll(partialTemporalContexts)) {
+                    relation.get(match.getUser()).putIfAbsent(match.getScenario(), new HashSet<>());
+                    relation.get(match.getUser()).get(match.getScenario()).add(match.getZone());
+                }
+            }
+            List<User> sortedUsers = relation.keySet().stream().sorted(Comparator.comparing(User::getName)).collect(Collectors.toList());
+            for (User user: sortedUsers) {
+                if(sortedUsers.size() != 1) {
+                    System.out.println(CLIContainer.getInstance().getIndentation() + user.getName() + ":");
+                    CLIContainer.getInstance().increaseIndentation();
+                }
+                List<Scenario> sortedScenarios = relation.get(user).keySet().stream().sorted(Comparator.comparing(Scenario::toString)).collect(Collectors.toList());
+                for (Scenario scenario : sortedScenarios) {
+                    List<String> sortedNames = relation.get(user).get(scenario).stream().map(x -> x.getName()).sorted().collect(Collectors.toList());
+                    System.out.println(CLIContainer.getInstance().getIndentation()
+                            + scenario.toString() + " -> " + sortedNames.toString());
+                }
+                if(sortedUsers.size() != 1) {
+                    CLIContainer.getInstance().decreaseIdentation();
+                }
+            }
+        }
+
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all security zones")
-        public void securityzones() {
-            SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
-            Map<String, Map<String, List<String>>> buildings = new HashMap<>();
-            for (Building building: policy.getBuildings()) {
-                buildings.put(building.getName(), new HashMap<>());
-                for(SecurityZone zone: building.getSecurityzones()) {
-                    buildings.get(building.getName()).put(zone.getName(), zone.getReachable().stream().map(x -> x.getName()).sorted().collect(Collectors.toList()));
+        public void securityzones(@Option(names = {"-status"}, required = false) boolean showStatus) {
+            SiteAccessControlSystem system = (SiteAccessControlSystem) CLIContainer.getInstance().getModel().getContents().get(0);
+            List<SecurityZone> zones = system.getSecurityZones().stream().
+                    sorted( Comparator.comparing(SecurityZone::getName)).collect(Collectors.toList());
+            for (SecurityZone zone: zones) {
+                System.out.println(CLIContainer.getInstance().getIndentation() + zone.getName());
+                CLIContainer.getInstance().increaseIndentation();
+                System.out.println(CLIContainer.getInstance().getIndentation() + "connected to outside: " +
+                        zone.isPublic());
+                System.out.println(CLIContainer.getInstance().getIndentation() + "connects to: " +
+                        zone.getReachable().stream().map(x -> x.getName()).sorted().collect(Collectors.toList()));
+
+                if(showStatus) {
+                    System.out.println(CLIContainer.getInstance().getIndentation() + "status: ");
+                    CLIContainer.getInstance().increaseIndentation();
+                    SecurityZoneAccessStatus.Match partialMatch = SecurityZoneAccessStatus.Matcher.create().
+                            newMatch(null, zone, null);
+                    SecurityZoneAccessStatus.Matcher matcher = CLIContainer.getInstance().getEngine()
+                            .getMatcher(SecurityZoneAccessStatus.instance());
+                    Set<SecurityZoneAccessStatus.Match> matches = new HashSet<>(matcher.getAllMatches(partialMatch));
+                    matches.stream().sorted(Comparator.comparing(m -> m.getScenario().toString())).
+                            forEach(m -> System.out.println(CLIContainer.getInstance().getIndentation()
+                                    + m.getScenario().toString() + " -> " + AuthenticationStatus.toName(m.getStatus())));
+                    CLIContainer.getInstance().decreaseIdentation();
                 }
-            }
-            List<String> sortedBuildingNames = buildings.keySet().stream().sorted().collect(Collectors.toList());
-            for(String buildingName: sortedBuildingNames) {
-                System.out.println(buildingName + ":");
-                List<String> sortedSecurityZoneNames = buildings.get(buildingName).keySet().stream().sorted().collect(Collectors.toList());
-                for (String securityZoneName: sortedSecurityZoneNames) {
-                    System.out.println("\t" + securityZoneName + " -> " + buildings.get(buildingName).get(securityZoneName));
-                }
+
+                System.out.println(CLIContainer.getInstance().getIndentation() + "constrained by: " +
+                        zone.getConstrainedBy().stream().map(x -> x.getName()).sorted().collect(Collectors.toList()));
+
+                CLIContainer.getInstance().decreaseIdentation();
             }
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all computed scenarios")
         public void scenarios( @Option(names = {"-example"}, description = "Show an example instance.", required = false) boolean example,
-                @Option(names = {"-date"}, description = "Show all scenarios for a specific date", required = false) String dateString) throws ParseException {
+                @Option(names = {"-date"}, description = "Show all scenarios for a specific date", required = false) String dateString
+        ) throws ParseException, ModelManipulationException {
             if(dateString == null) {
                 Set<Scenarios.Match> matches = CLIContainer.getInstance().getEngine().getMatcher(Scenarios.instance()).getAllMatches().stream().collect(Collectors.toSet());
                 List<String> groups = new LinkedList<>();
@@ -821,9 +1107,7 @@ public class PolicyValidatorCLI {
                     String scenarioString = match.getScenario().toString();
                     // Please forgive me, for I have written horrible code.
                     if (example) {
-                        scenarioString += " (ex: " + dateScheduleTimeRange_To_TimeRangeGroupCombinationMatchPrettyString(
-                                getExampleDateScheduleTimeRange(match.getScenario())
-                        ) + ")";
+                        scenarioString += " (ex: " + getExampleDateScheduleTimeRange(match.getScenario()) + ")";
                     }
                     groups.add(scenarioString);
                 }
@@ -833,36 +1117,40 @@ public class PolicyValidatorCLI {
                     System.out.println(group);
                 }
             } else {
-                if (dateString.split("_").length == 3) {
-                    dateString = addDayToDateString(dateString);
-                }
-                DayOfYearSchedule schedule = (DayOfYearSchedule) CLIContainer.getInstance().getModel().getEObject(dateString);
-                DateScheduleTimeRange_To_Scenario.Match partialMatch = DateScheduleTimeRange_To_Scenario.Matcher.create().newMatch(schedule, null, null, null);
-                DateScheduleTimeRange_To_Scenario.Matcher matcher = CLIContainer.getInstance().getEngine().getMatcher(DateScheduleTimeRange_To_Scenario.instance());
-                List<DateScheduleTimeRange_To_Scenario.Match> matches = matcher.getAllMatches(partialMatch).stream().sorted((m1, m2) -> m1.getStarttime().compareTo(m2.getStarttime())).collect(Collectors.toList());
-                for (DateScheduleTimeRange_To_Scenario.Match match : matches) {
-                    System.out.println( "[" + fromMinutesToHHmm(match.getStarttime()) + "-" + fromMinutesToHHmm(match.getEndtime()) + "]"
-                            + " " + match.getScenario().toString());
-                }
+                throw new IllegalArgumentException("TODO: fix this");
+                //TODO!
+//                if (dateString.split("_").length == 3) {
+//                    dateString = addDayToDateString(dateString);
+//                }
+//                DayOfYearSchedule schedule = (DayOfYearSchedule) CLIContainer.getInstance().getElement(dateString, DayOfYearSchedule.class);
+//                DateScheduleInstance_To_Scenario.Match partialMatch = DateScheduleInstance_To_Scenario.Matcher.create().newMatch(schedule, null, null, null);
+//                DateScheduleInstance_To_Scenario.Matcher matcher = CLIContainer.getInstance().getEngine().getMatcher(DateScheduleInstance_To_Scenario.instance());
+//                List<DateScheduleInstance_To_Scenario.Match> matches = matcher.getAllMatches(partialMatch).stream().sorted((m1, m2) -> m1.getStarttime().compareTo(m2.getStarttime())).collect(Collectors.toList());
+//                for (DateScheduleInstance_To_Scenario.Match match : matches) {
+//                    System.out.println( "[" + fromMinutesToHHmm(match.getStarttime()) + "-" + fromMinutesToHHmm(match.getEndtime()) + "]"
+//                            + " " + match.getScenario().toString());
+//                }
             }
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all temporal contexts")
         public void temporalcontexts() {
-            SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
-            Schedule schedule = policy.getSchedule();
+            SiteAccessControlSystem system = (SiteAccessControlSystem) CLIContainer.getInstance().getModel().getContents().get(0);
+            Schedule schedule = system.getSchedule();
             List<TemporalContext> temporalContexts = schedule.getTemporalContexts().stream().sorted(
                     Comparator.comparing(TemporalContext::getName)
             ).collect(Collectors.toList());
-            System.out.println(temporalContexts);
+            for(TemporalContext tc: temporalContexts) {
+                System.out.println(tc.getName());
+            }
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show n temporal context instances (default=5)")
         public void temporalcontextinstances(@Option(names = {"-n"}, required = false) int instanceCount) {
-            SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
-            Schedule schedule = policy.getSchedule();
+            SiteAccessControlSystem system = (SiteAccessControlSystem) CLIContainer.getInstance().getModel().getContents().get(0);
+            Schedule schedule = system.getSchedule();
             List<TemporalContext> temporalContexts = schedule.getTemporalContexts().stream().sorted(
                     Comparator.comparing(TemporalContext::getName)
             ).collect(Collectors.toList());
@@ -871,18 +1159,22 @@ public class PolicyValidatorCLI {
                 instanceCount = 5;
             }
             for(TemporalContext context: temporalContexts) {
-                System.out.println(context.getName() + "->" +
-                    context.getInstances().stream().limit(instanceCount)
-                            .map(PolicyValidatorCLI::timeTimeRangePrettyString).collect(Collectors.toList())
-                );
+                if(context.getInstances().size() == 0) {
+                    System.out.println(context.getName() + "-> []");
+                } else {
+                    System.out.println(context.getName() + "->" +
+                            context.getInstances().stream().limit(instanceCount)
+                                    .map(PolicyValidatorCLI::timeTimeRangePrettyString).collect(Collectors.toList())
+                    );
+                }
             }
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all temporal grant rules")
         public void temporalgrantrules() {
-            SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
-            Schedule schedule = policy.getSchedule();
+            SiteAccessControlSystem system = (SiteAccessControlSystem) CLIContainer.getInstance().getModel().getContents().get(0);
+            Schedule schedule = system.getSchedule();
             List<TemporalGrantRule> temporalGrantRules = schedule.getTemporalGrantRules().stream().sorted(
                     Comparator.comparing(TemporalGrantRule::getName)
             ).collect(Collectors.toList());
@@ -893,11 +1185,28 @@ public class PolicyValidatorCLI {
             }
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Show all temporal authenticaion rules")
+        public void temporalauthenticationrules() {
+            SiteAccessControlSystem system = (SiteAccessControlSystem) CLIContainer.getInstance().getModel().getContents().get(0);
+            Schedule schedule = system.getSchedule();
+            List<TemporalAuthenticationRule> temporalAuthenticationRules = system.getAuthenticationPolicy().getTemporalAuthenticationRules()
+                    .stream().sorted(
+                    Comparator.comparing(TemporalAuthenticationRule::getName)
+            ).collect(Collectors.toList());
+            for (TemporalAuthenticationRule rule: temporalAuthenticationRules) {
+                String command = rule.getStatus() == 0 ? "unlocked" :
+                        rule.getStatus() == 1 ? "protected" : "locked";
+                System.out.println(rule.getName() + " : " + command + " " + rule.getSecurityZone() +
+                        " during " + rule.getTemporalContext().getName() + " with priority " + rule.getPriority());
+            }
+        }
+
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all constraints")
         public void constraints() {
-            SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
-            List<AuthorizationConstraint> authorizationConstraints = policy.getAuthorizationConstraints().stream().sorted(
+            SiteAccessControlSystem system = (SiteAccessControlSystem) CLIContainer.getInstance().getModel().getContents().get(0);
+            List<AuthorizationConstraint> authorizationConstraints = system.getAuthorizationConstraints().stream().sorted(
                     Comparator.comparing(AuthorizationConstraint::getName)
             ).collect(Collectors.toList());
             for (AuthorizationConstraint constraint: authorizationConstraints) {
@@ -905,10 +1214,10 @@ public class PolicyValidatorCLI {
             }
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all constraint violations")
         public void violations() {
-            SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
+            SiteAccessControlSystem system = (SiteAccessControlSystem) CLIContainer.getInstance().getModel().getContents().get(0);
             CLIContainer.getInstance().getEngine().getMatcher(SoDURPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
             CLIContainer.getInstance().getEngine().getMatcher(SoDUDPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
@@ -959,10 +1268,10 @@ public class PolicyValidatorCLI {
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
         }
 
-        @Command(mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all policy smells")
         public void smells() {
-            SecurityPolicy policy = (SecurityPolicy) CLIContainer.getInstance().getModel().getContents().get(0);
+            SiteAccessControlSystem system = (SiteAccessControlSystem) CLIContainer.getInstance().getModel().getContents().get(0);
             CLIContainer.getInstance().getEngine().getMatcher(UnusedRole.instance()).getAllMatches().stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
             CLIContainer.getInstance().getEngine().getMatcher(UnusedDemarcation.instance()).getAllMatches().stream().forEach(c -> System.out.println(
@@ -973,22 +1282,33 @@ public class PolicyValidatorCLI {
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
             CLIContainer.getInstance().getEngine().getMatcher(ZombiePermission.instance()).getAllMatches().stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(UnusuablePermission.instance()).getAllMatches().stream().forEach(c -> System.out.println(
-                    c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(UnreachableAccess.instance()).getAllMatches().stream().forEach(c -> System.out.println(
-                    c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
             CLIContainer.getInstance().getEngine().getMatcher(UnreachableZone.instance()).getAllMatches().stream().forEach(c -> System.out.println(
-                    c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(IgnoredRoleInheritance.instance()).getAllMatches().stream().forEach(c -> System.out.println(
-                    c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(IgnoredDemarcationInheritance.instance()).getAllMatches().stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
             CLIContainer.getInstance().getEngine().getMatcher(GodUser.instance()).getAllMatches().stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
             CLIContainer.getInstance().getEngine().getMatcher(GodRole.instance()).getAllMatches().stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
+            CLIContainer.getInstance().getEngine().getMatcher(IgnoredRoleInheritance.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+                    c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
+            CLIContainer.getInstance().getEngine().getMatcher(IgnoredDemarcationInheritance.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+                    c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
+            CLIContainer.getInstance().getEngine().getMatcher(UserCanGetTrapped.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+                    c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
+            CLIContainer.getInstance().getEngine().getMatcher(UninvocablePermission.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+                    c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
         }
 
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Show used memory (runs gc first)")
+        public void memory() {
+            // Get the Java runtime
+            Runtime runtime = Runtime.getRuntime();
+            // Run the garbage collector
+            runtime.gc();
+            // Calculate the used memory
+            long memory = (runtime.totalMemory() - runtime.freeMemory()) / (1024L * 1024L);
+            System.out.println("used memory: " + memory + " MB");
+        }
     }
 
 
@@ -1018,13 +1338,29 @@ public class PolicyValidatorCLI {
         return String.format("%02d:%02d", hours, remainMinutes);
     }
 
-    public static DateScheduleTimeRange_To_Scenario.Match getExampleDateScheduleTimeRange(Scenario set) {
-        DateScheduleTimeRange_To_Scenario.Match partialMatch = DateScheduleTimeRange_To_Scenario.Matcher.create().newMatch(null, null, null, set);
-        DateScheduleTimeRange_To_Scenario.Matcher matcher = CLIContainer.getInstance().getEngine().getMatcher(
-                DateScheduleTimeRange_To_Scenario.instance());
-            Optional<DateScheduleTimeRange_To_Scenario.Match>
-                    match = matcher.getOneArbitraryMatch(partialMatch);
-        return match.<DateScheduleTimeRange_To_Scenario.Match>map(value -> match.get()).orElse(null);
+    public static String getExampleDateScheduleTimeRange(Scenario set) {
+        DateScheduleInstance_To_Scenario.Match partialMatch1 = DateScheduleInstance_To_Scenario.Matcher.create().newMatch(null, null, null, set);
+        DateScheduleInstance_To_Scenario.Matcher matcher1 = CLIContainer.getInstance().getEngine().getMatcher(
+                DateScheduleInstance_To_Scenario.instance());
+        Optional<DateScheduleInstance_To_Scenario.Match> match1 = matcher1.getOneArbitraryMatch(partialMatch1);
+        if(match1.isPresent()) {
+            return match1.get().getDaySchedule().getName() + " " +
+                    fromMinutesToHHmm(match1.get().getStarttime()) + "-" +
+                    fromMinutesToHHmm(match1.get().getEndtime());
+        } else {
+            DayOfWeekAndMonthAllCombinedScheduleInstance_To_Scenario.Match partialMatch2 = DayOfWeekAndMonthAllCombinedScheduleInstance_To_Scenario
+                    .Matcher.create().newMatch(null, null, null, set);
+            DayOfWeekAndMonthAllCombinedScheduleInstance_To_Scenario.Matcher matcher = CLIContainer.getInstance().getEngine().getMatcher(
+                    DayOfWeekAndMonthAllCombinedScheduleInstance_To_Scenario.instance());
+            Optional<DayOfWeekAndMonthAllCombinedScheduleInstance_To_Scenario.Match> match2 = matcher.getOneArbitraryMatch(partialMatch2);
+            if(match2.isPresent()) {
+                return match2.get().getDaySchedule().getName() + " " +
+                        fromMinutesToHHmm(match2.get().getStarttime()) + "-" +
+                        fromMinutesToHHmm(match2.get().getEndtime());
+            } else {
+                return "none"; //Should never happen!
+            }
+        }
     }
 
     public static String addDayToDateString(String dateString) throws ParseException {
@@ -1040,13 +1376,10 @@ public class PolicyValidatorCLI {
         return (int) ChronoUnit.MINUTES.between(LocalTime.MIDNIGHT, LocalTime.parse(time));
     }
 
-    public static String dateScheduleTimeRange_To_TimeRangeGroupCombinationMatchPrettyString(DateScheduleTimeRange_To_Scenario.Match match) {
-        return match.getYearDaySchedule().getName() + " " +
-                fromMinutesToHHmm(match.getStarttime()) + "-" +
-                fromMinutesToHHmm(match.getEndtime());
-    }
-
     public static String timeTimeRangePrettyString(TimeRange timeRange) {
+        if(timeRange == null) {
+            return "";
+        }
         return timeRange.getDaySchedule().getName() + " " +
                 fromMinutesToHHmm(timeRange.getStart()) + "-" +
                 fromMinutesToHHmm(timeRange.getEnd());

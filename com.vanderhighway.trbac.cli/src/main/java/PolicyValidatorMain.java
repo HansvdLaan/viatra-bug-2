@@ -11,7 +11,7 @@ import com.google.common.reflect.TypeToken;
 import com.vanderhighway.trbac.core.modifier.PolicyAutomaticModifier;
 import com.vanderhighway.trbac.core.modifier.PolicyModifier;
 import com.vanderhighway.trbac.core.validator.PolicyValidator;
-import com.vanderhighway.trbac.model.trbac.model.SecurityPolicy;
+import com.vanderhighway.trbac.model.trbac.model.SiteAccessControlSystem;
 import com.vanderhighway.trbac.model.trbac.model.TRBACPackage;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
@@ -55,7 +55,8 @@ public class PolicyValidatorMain {
 
 		ResourceSet set = new ResourceSetImpl();
 		//URI uri = URI.createFileURI("models/basic/intervals.trbac");
-		URI uri = URI.createFileURI("simple_company.trbac");
+		//URI uri = URI.createFileURI("simple_company.trbac");
+		URI uri = URI.createFileURI("performance_case.trbac");
 		Resource resource = set.getResource(uri, true);
 
 
@@ -63,11 +64,11 @@ public class PolicyValidatorMain {
 		final AdvancedViatraQueryEngine engine = AdvancedViatraQueryEngine.createUnmanagedEngine(new EMFScope(set), options);
 
 
-		PolicyModifier modifier = new PolicyModifier(engine, (SecurityPolicy) resource.getContents().get(0), resource);
+		PolicyModifier modifier = new PolicyModifier(engine, (SiteAccessControlSystem) resource.getContents().get(0), resource);
 
 		modifier.addRole("RoleTest");
 
-		PolicyAutomaticModifier automaticModifier = new PolicyAutomaticModifier(engine, modifier, (SecurityPolicy) resource.getContents().get(0));
+		PolicyAutomaticModifier automaticModifier = new PolicyAutomaticModifier(engine, modifier, (SiteAccessControlSystem) resource.getContents().get(0));
 
 		automaticModifier.initialize();
 		automaticModifier.execute();

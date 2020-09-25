@@ -8,6 +8,7 @@ import com.google.common.base.Objects;
 
 import com.vanderhighway.trbac.core.validator.PolicyValidator;
 import com.vanderhighway.trbac.model.trbac.model.*;
+import com.vanderhighway.trbac.patterns.DayOfWeekInstanceP;
 import com.vanderhighway.trbac.patterns.TimeRangeP;
 
 import org.apache.log4j.Logger;
@@ -48,13 +49,13 @@ public class PolicyAutomaticModifier {
     private PolicyModifier policyModifier;
     Map<String,IntervalTree> trees;
 
-    public PolicyAutomaticModifier(AdvancedViatraQueryEngine engine, PolicyModifier policyModifier, SecurityPolicy policy) {
+    public PolicyAutomaticModifier(AdvancedViatraQueryEngine engine, PolicyModifier policyModifier, SiteAccessControlSystem system) {
         this.engine = engine;
         this.policyModifier = policyModifier;
         this.trees = new HashMap<>();
 
-        if(policy.getSchedule() != null) {
-            for (DaySchedule daySchedule : policy.getSchedule().getDaySchedules()) {
+        if(system.getSchedule() != null) {
+            for (DaySchedule daySchedule : system.getSchedule().getDaySchedules()) {
                 IntervalTree tree = IntervalTreeBuilder.newBuilder()
                         .usePredefinedType(IntervalTreeBuilder.IntervalType.LONG)
                         .collectIntervals(interval -> new ListIntervalCollection())
@@ -81,7 +82,7 @@ public class PolicyAutomaticModifier {
         EventDrivenTransformation transformation = null;
         this.manipulation = new SimpleModelManipulations(this.engine);
         transformation = EventDrivenTransformation.forEngine(this.engine)
-                .addRule(this.ProcessRanges())
+                .addRule(this.ProcessTimeRangeModifications())
                 .build();
         return transformation;
     }
@@ -94,79 +95,21 @@ public class PolicyAutomaticModifier {
         return;
     }
 
-//    public class DoAddScheduleRange implements Callable<Void> {
-//        private final com.vanderhighway.trbac.core.modifier.PolicyModifier modifier;
-//        private final Range.Match it;
-//
-//        public DoAddScheduleRange(com.vanderhighway.trbac.core.modifier.PolicyModifier modifier, Range.Match it) {
-//            this.modifier = modifier;
-//            this.it = it;
-//        }
-//
-//        public Void call() throws Exception {
-//            String key = String.valueOf("copy-" + it.getRange().toString());
-//            this.modifier.execute(this.modifier.addScheduleRange(it.getRange().getDayschedule(),
-//                    key, it.getStarttime(), it.getEndtime()));
-//            return null;
-//        }
-//    }
-
-    public class DoProcessAddRange implements Callable<Void> {
-        private final PolicyModifier modifier;
-        private final TimeRangeP.Match it;
-
-        public DoProcessAddRange(PolicyModifier modifier, TimeRangeP.Match it) {
-            this.modifier = modifier;
-            this.it = it;
-        }
-
-        public Void call() throws Exception {
-            IntervalTree tree = trees.get(it.getInstance().getDaySchedule().getName());
-            IntervalUtil.processAddRange(modifier, tree, it);
-            return null;
-        }
-    }
-
-    public class DoProcessRemoveRange implements Callable<Void> {
-        private final PolicyModifier modifier;
-        private final TimeRangeP.Match it;
-
-        public DoProcessRemoveRange(PolicyModifier modifier, TimeRangeP.Match it) {
-            this.modifier = modifier;
-            this.it = it;
-        }
-
-        public Void call() throws Exception {
-            IntervalTree tree = trees.get(it.getInstance().getDaySchedule().getName());
-            IntervalUtil.processRemoveRange(modifier, tree, it);
-            return null;
-        }
-    }
-
-    public static class DoDummy implements Callable<Void> {
-
-        public DoDummy() {
-        }
-
-        public Void call() throws Exception {
-            //System.out.println("The dummy speaks!");
-            return null;
-        }
-    }
-
-
-
-    private EventDrivenTransformationRule<TimeRangeP.Match, TimeRangeP.Matcher> ProcessRanges() {
-        final Consumer<TimeRangeP.Match> function = (TimeRangeP.Match it) -> {
-            System.out.println("hey!");
-        };
+    private EventDrivenTransformationRule<TimeRangeP.Match, TimeRangeP.Matcher> ProcessTimeRangeModifications() {
         EventDrivenTransformationRule<TimeRangeP.Match, TimeRangeP.Matcher> dayrangerule =
                 this._eventDrivenTransformationRuleFactory.createRule(TimeRangeP.instance()).action(
                         CRUDActivationStateEnum.CREATED, (TimeRangeP.Match it) -> {
-                            //System.out.println("DayRangeMatch CREATED:" + it.toString());
                             try {
                                 IntervalTree tree = trees.get(it.getInstance().getDaySchedule().getName());
 
+                                if(tree == null) {
+                                    tree = IntervalTreeBuilder.newBuilder()
+                                            .usePredefinedType(IntervalTreeBuilder.IntervalType.LONG)
+                                            .collectIntervals(interval -> new ListIntervalCollection())
+                                            .build();
+                                    tree.add(new IntegerInterval(0, 1439));
+                                    this.trees.put(it.getInstance().getDaySchedule().getName(), tree);
+                                }
                                 //Check if the match hasn't been processed before, e.g. in
                                 // the case of the always day schedule time ranges.
                                 if(it.getInstance().getDayScheduleTimeRanges().size() == 0) {
@@ -177,7 +120,6 @@ public class PolicyAutomaticModifier {
                             }
                         }).action(
                         CRUDActivationStateEnum.UPDATED, (TimeRangeP.Match it) -> {
-                            //System.out.println("DayRangeMatch UPDATED:" + it.toString());
                         }).action(
                         CRUDActivationStateEnum.DELETED, (TimeRangeP.Match it) -> {
                             try {
@@ -191,51 +133,6 @@ public class PolicyAutomaticModifier {
                         .name("process-day-ranges").build();
         return dayrangerule;
     }
-
-//    private EventDrivenTransformationRule<RoleName.Match, RoleName.Matcher> DummyProcess() {
-//        final Consumer<RoleName.Match> function = (RoleName.Match it) -> {
-//            System.out.println("hey!");
-//        };
-//        EventDrivenTransformationRule<RoleName.Match, RoleName.Matcher> test =
-//                this._eventDrivenTransformationRuleFactory.createRule(RoleName.instance()).action(
-//                        CRUDActivationStateEnum.CREATED, (RoleName.Match it) -> {
-//                            try {
-//                                engine.delayUpdatePropagation(
-//                                        new DoDummy()
-//                                );
-//                            } catch (InvocationTargetException e) {
-//                                e.printStackTrace();
-//                            }
-//                        }).action(
-//                        CRUDActivationStateEnum.UPDATED, (RoleName.Match it) -> {
-//                            System.out.println("RoleName UPDATED:" + it.toString());}).action(
-//                        CRUDActivationStateEnum.DELETED, (RoleName.Match it) -> {
-//                            System.out.println("RoleName DELETED:" + it.toString());}
-//                ).addLifeCycle(Lifecycles.getDefault(true, true))
-//                        .name("process-day-ranges").build();
-//        return test;
-//    }
-
-//    private EventDrivenTransformationRule<DayRange.Match, DayRange.Matcher> ProcessDayRanges() {
-//        final Consumer<DayRange.Match> function = (DayRange.Match it) -> {
-//            System.out.println("hey!");
-//            final Consumer<Policy.Match> function2 = (Policy.Match it2) -> {
-//                try {
-                    //EObject entity = this.manipulation.createChild(it2.getPolicy(), ePackage.getPolicy_Roles(), ePackage.getRole());
-                    //this.manipulation.set(entity, ePackage.getRole_Name(), it.getRange().getName() + " copy");
-        //}
-
-//        final EventDrivenTransformationRule<DayRange.Match, DayRange.Matcher> exampleRule =
-//                this._eventDrivenTransformationRuleFactory.createRule(DayRange.instance()).action(
-//                        CRUDActivationStateEnum.CREATED,  (DayRange.Match it) -> {
-//                        }).action(
-//                        CRUDActivationStateEnum.UPDATED, (DayRange.Match it) -> {
-//                        }).action(
-//                        CRUDActivationStateEnum.DELETED, (DayRange.Match it) -> {
-//                        }).addLifeCycle(Lifecycles.getDefault(true, true)).build();
-//        return exampleRule;
-//    }
-
 
     public EventDrivenTransformation getTransformation() {
         return transformation;

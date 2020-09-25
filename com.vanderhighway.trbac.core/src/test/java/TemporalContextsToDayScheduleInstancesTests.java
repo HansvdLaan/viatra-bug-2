@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TemporalContextsToDayScheduleInstances {
+public class TemporalContextsToDayScheduleInstancesTests {
 
     static URI uriEmptySchedules;
     private static Resource emptyScheduleResourceMaster; //loaded version, make a copy for test cases!
@@ -50,8 +50,7 @@ public class TemporalContextsToDayScheduleInstances {
         ResourceSet set = new ResourceSetImpl();
         emptyScheduleResourceMaster = set.getResource(uriEmptySchedules, true);
         utils = new CoreUtils();
-        utils.addMissingDaySchedules(emptyScheduleResourceMaster, (SecurityPolicy) emptyScheduleResourceMaster.getContents().get(0),
-                "2020-01-01", "2030-01-01");
+        utils.addMissingDaySchedules(emptyScheduleResourceMaster, (SiteAccessControlSystem) emptyScheduleResourceMaster.getContents().get(0));
     }
 
     @BeforeEach
@@ -61,9 +60,9 @@ public class TemporalContextsToDayScheduleInstances {
         System.out.println(emptyScheduleResource);
 
         engine = AdvancedViatraQueryEngine.createUnmanagedEngine(new EMFScope(emptyScheduleResource));
-        modifier = new PolicyModifier(engine, (SecurityPolicy) emptyScheduleResource.getContents().get(0), emptyScheduleResource);
+        modifier = new PolicyModifier(engine, (SiteAccessControlSystem) emptyScheduleResource.getContents().get(0), emptyScheduleResource);
         modifier.setInstanceIDCounter(utils.getInstanceIDCounter());
-        automaticModifier = new PolicyAutomaticModifier(engine, modifier, (SecurityPolicy) emptyScheduleResource.getContents().get(0));
+        automaticModifier = new PolicyAutomaticModifier(engine, modifier, (SiteAccessControlSystem) emptyScheduleResource.getContents().get(0));
     }
 
     @Test

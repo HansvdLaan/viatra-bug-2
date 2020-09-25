@@ -23,13 +23,13 @@ public class TreblaPolicyGenerator {
 
 	public static void main(String[] args) throws IOException, InvocationTargetException, ModelManipulationException, ModelManipulationException, ParseException {
 
-        Resource resource = GeneratorUtil.generateAndSaveResource(ePackage, "empty_policy_trebla");
-        SecurityPolicy policy = GeneratorUtil.buildBasicSecurityPolicy(ePackage, resource, "DummySecurityPolicy",
+        Resource resource = GeneratorUtil.createAndSaveTRBACModel("empty_policy_trebla");
+        SiteAccessControlSystem system = GeneratorUtil.buildBasicSecurityPolicy(ePackage, resource, "DummySecurityPolicy",
                 "DummyAuthorizationPolicy", "DummySchedule",
                 "2020-01-01", "2030-01-01");
 
         final AdvancedViatraQueryEngine engine = AdvancedViatraQueryEngine.createUnmanagedEngine(new EMFScope(resource));
-		PolicyModifier modifier = new PolicyModifier(engine, (SecurityPolicy) resource.getContents().get(0), resource);
+		PolicyModifier modifier = new PolicyModifier(engine, (SiteAccessControlSystem) resource.getContents().get(0), resource);
 
 		TemporalContext always = modifier.addTemporalContext("Always");
         TemporalContext guardShifts = modifier.addTemporalContext("GuardShifts");
@@ -38,6 +38,9 @@ public class TreblaPolicyGenerator {
         TemporalContext lunchBreaks = modifier.addTemporalContext("LunchBreaks");
         TemporalContext overtime = modifier.addTemporalContext("Overtime");
         TemporalContext cleaningShifts = modifier.addTemporalContext("CleaningShifts");
+		TemporalContext workshops = modifier.addTemporalContext("HolidayWorkshops");
+		TemporalContext familyDay = modifier.addTemporalContext("FamilyDay");
+		TemporalContext firstMondayOfJanuary = modifier.addTemporalContext("FirstMondayOfJanuary");
 
 		Map<String, DayOfWeekSchedule> dayOfWeekScheduleMap = new HashMap<>();
 		Map<String, Map<Integer, DayOfMonthSchedule>> dayOfMonthScheduleMap = new HashMap();
@@ -53,10 +56,13 @@ public class TreblaPolicyGenerator {
         GeneratorUtil.addManyTemporalContextInstances(modifier, overtime, weekDays, Arrays.asList(new IntegerInterval(1020, 1169)));
         GeneratorUtil.addManyTemporalContextInstances(modifier, lunchBreaks, weekDays, Arrays.asList(new IntegerInterval(720, 779)));
         GeneratorUtil.addManyTemporalContextInstances(modifier, cleaningShifts, Arrays.asList("Tuesday","Friday"), Arrays.asList(new IntegerInterval(1170, 1260)));
+		GeneratorUtil.addManyTemporalContextInstances(modifier, workshops, Arrays.asList("5_December", "25_December"),
+				Arrays.asList(new IntegerInterval(480, 1019)));
+		GeneratorUtil.addManyTemporalContextInstances(modifier, familyDay, Arrays.asList("Saturday_10_April_2021"), Arrays.asList(new IntegerInterval(480, 1019)));
+		GeneratorUtil.addManyTemporalContextInstances(modifier, firstMondayOfJanuary, Arrays.asList("Monday_1_January", "Monday_2_January", "Monday_3_January",
+				"Monday_4_January", "Monday_5_January", "Monday_6_January", "Monday_7_January"),
+				Arrays.asList(new IntegerInterval(480, 1019)));
 
-		TemporalContext workshops = modifier.addTemporalContext("HolidayWorkshops");
-        GeneratorUtil.addManyTemporalContextInstances(modifier, workshops, Arrays.asList("5_December", "25_December"),
-                Arrays.asList(new IntegerInterval(480, 1019)));
 
 		// Add Users
 		User userAmy = modifier.addUser("Amy");
@@ -143,21 +149,20 @@ public class TreblaPolicyGenerator {
 		modifier.assignRoleToUser(userJulia, roleVisitor);
 
 		// Add Role-Demarcation relation
-		modifier.assignDemarcationToRole(roleEmployee, demarcationWorking);
-		modifier.assignDemarcationToRole(roleDesigner, demarcationDesigning);
-		modifier.assignDemarcationToRole(roleHeadDesigner, demarcationManagingPeople);
-		modifier.assignDemarcationToRole(roleHeadDesigner, demarcationManagingStock);
-		modifier.assignDemarcationToRole(roleOperationsManager, demarcationManagingPeople);
-		modifier.assignDemarcationToRole(roleOperationsManager, demarcationManagingStock);
-		modifier.assignDemarcationToRole(roleDirector, demarcationManaging);
-		modifier.assignDemarcationToRole(roleGuard, demarcationGuarding);
-		modifier.assignDemarcationToRole(roleCleaner, demarcationCleaning);
-		modifier.assignDemarcationToRole(roleVisitor, demarcationVisiting);
-		modifier.assignDemarcationToRole(roleVisitor, demarcationTakingABreak);
+//		modifier.assignDemarcationToRole(roleEmployee, demarcationWorking);
+//		modifier.assignDemarcationToRole(roleDesigner, demarcationDesigning);
+//		modifier.assignDemarcationToRole(roleHeadDesigner, demarcationManagingPeople);
+//		modifier.assignDemarcationToRole(roleHeadDesigner, demarcationManagingStock);
+//		modifier.assignDemarcationToRole(roleOperationsManager, demarcationManagingPeople);
+//		modifier.assignDemarcationToRole(roleOperationsManager, demarcationManagingStock);
+//		modifier.assignDemarcationToRole(roleDirector, demarcationManaging);
+//		modifier.assignDemarcationToRole(roleGuard, demarcationGuarding);
+//		modifier.assignDemarcationToRole(roleCleaner, demarcationCleaning);
+//		modifier.assignDemarcationToRole(roleVisitor, demarcationVisiting);
+//		modifier.assignDemarcationToRole(roleVisitor, demarcationTakingABreak);
 
 		// Add Demarcation-Permission relation
-		Arrays.asList(permissionLobby, permissionOpenOffice, permissionRestaurant, permissionMeetingRoom1, permissionMeetingRoom2,
-				permissionToiletsWorkshop, permissionToiletsOpenOffice).forEach(p -> {
+		Arrays.asList(permissionLobby, permissionOpenOffice, permissionRestaurant, permissionMeetingRoom1, permissionMeetingRoom2, permissionToiletsOpenOffice).forEach(p -> {
 					try {
 						modifier.assignPermissionToDemarcation(demarcationWorking, p);
 					} catch (ModelManipulationException e) {
@@ -167,8 +172,12 @@ public class TreblaPolicyGenerator {
 		);
 		modifier.assignPermissionToDemarcation(demarcationDesigning, permissionWorkshop);
 		modifier.assignPermissionToDemarcation(demarcationDesigning, permissionStorage);
+		modifier.assignPermissionToDemarcation(demarcationDesigning, permissionToiletsWorkshop);
+
 		Arrays.asList(permissionLobby,permissionOpenOffice,permissionRestaurant,permissionStorage,permissionMeetingRoom1,
-				permissionMeetingRoom2,permissionOffice1,permissionOffice2,permissionToiletsOpenOffice, permissionToiletsWorkshop).forEach(p -> {
+				permissionMeetingRoom2,permissionOffice1,permissionOffice2,permissionToiletsOpenOffice, permissionWorkshop,
+				permissionToiletsWorkshop)
+				.forEach(p -> {
 					try {
 						modifier.assignPermissionToDemarcation(demarcationManagingPeople, p);
 					} catch (ModelManipulationException e) {
@@ -176,6 +185,7 @@ public class TreblaPolicyGenerator {
 					}
 				}
 		);
+
 		modifier.assignPermissionToDemarcation(demarcationManagingFinances, permissionVault);
 		modifier.assignPermissionToDemarcation(demarcationManagingStock, permissionStorage);
 
@@ -183,17 +193,19 @@ public class TreblaPolicyGenerator {
 		modifier.assignPermissionToDemarcation(demarcationGuarding, permissionOffice2);
 		modifier.assignPermissionToDemarcation(demarcationGuarding, permissionStorage);
 		modifier.assignPermissionToDemarcation(demarcationGuarding, permissionWorkshop);
+		modifier.assignPermissionToDemarcation(demarcationGuarding, permissionToiletsWorkshop);
 
-		modifier.assignPermissionToDemarcation(demarcationGuarding, permissionOffice1);
-		modifier.assignPermissionToDemarcation(demarcationGuarding, permissionOffice2);
-		modifier.assignPermissionToDemarcation(demarcationGuarding, permissionWorkshop);
+		modifier.assignPermissionToDemarcation(demarcationCleaning, permissionOffice1);
+		modifier.assignPermissionToDemarcation(demarcationCleaning, permissionOffice2);
+		modifier.assignPermissionToDemarcation(demarcationCleaning, permissionStorage);
+		modifier.assignPermissionToDemarcation(demarcationCleaning, permissionWorkshop);
+		modifier.assignPermissionToDemarcation(demarcationCleaning, permissionToiletsWorkshop);
 
 		modifier.assignPermissionToDemarcation(demarcationVisiting, permissionToiletsWorkshop);
 		modifier.assignPermissionToDemarcation(demarcationVisiting, permissionLobby);
 		modifier.assignPermissionToDemarcation(demarcationVisiting, permissionWorkshop);
 
 		modifier.assignPermissionToDemarcation(demarcationTakingABreak, permissionRestaurant);
-
 
 		modifier.addTemporalGrantRule(workingHours, "PE1", roleEmployee, demarcationWorking, true, 3);;
 		modifier.addTemporalGrantRule(workingHours, "PE2", roleDesigner, demarcationDesigning, true, 3);
@@ -208,25 +220,24 @@ public class TreblaPolicyGenerator {
 		modifier.addTemporalGrantRule(lunchBreaks, "PE11", roleVisitor, demarcationTakingABreak, true, 3);
 
 		// Add Trebla Building
-		Building building = modifier.addBuilding("TreblaHQ");
-		SecurityZone szLobby = modifier.addSecurityZone(building, "LobbyZone", true);
+		SecurityZone szLobby = modifier.addSecurityZone("LobbyZone", true);
 		modifier.assignObjectToPermission(permissionLobby, szLobby);
 
-		SecurityZone szToiletsWorkshop = modifier.addSecurityZone(building, "ToiletsWorkshopZone", false);
-		SecurityZone szWorkshop = modifier.addSecurityZone(building, "WorkshopZone", false);
-		SecurityZone szStorage = modifier.addSecurityZone(building, "StorageZone", false);
+		SecurityZone szToiletsWorkshop = modifier.addSecurityZone("ToiletsWorkshopZone", false);
+		SecurityZone szWorkshop = modifier.addSecurityZone("WorkshopZone", false);
+		SecurityZone szStorage = modifier.addSecurityZone("StorageZone", false);
 		modifier.assignObjectToPermission(permissionToiletsWorkshop, szToiletsWorkshop);
-		modifier.assignObjectToPermission(permissionToiletsWorkshop, szWorkshop);
+		modifier.assignObjectToPermission(permissionWorkshop, szWorkshop);
 		modifier.assignObjectToPermission(permissionStorage, szStorage);
 
-		SecurityZone szOpenOffice = modifier.addSecurityZone(building, "OpenOfficeZone", false);
-		SecurityZone szToiletsOpenOffice = modifier.addSecurityZone(building, "ToiletsOpenOfficeZone", false);
-		SecurityZone szVault = modifier.addSecurityZone(building, "VaultZone", false);
-		SecurityZone szOffice1 = modifier.addSecurityZone(building, "Office1Zone", false);
-		SecurityZone szOffice2 = modifier.addSecurityZone(building, "Office2Zone", false);
-		SecurityZone szMeetingRoom1 = modifier.addSecurityZone(building, "MeetingRoom1Zone", false);
-		SecurityZone szMeetingRoom2 = modifier.addSecurityZone(building, "MeetingRoom2Zone", false);
-		SecurityZone szRestaurantZone = modifier.addSecurityZone(building, "RestaurantZone", false);
+		SecurityZone szOpenOffice = modifier.addSecurityZone("OpenOfficeZone", false);
+		SecurityZone szToiletsOpenOffice = modifier.addSecurityZone("ToiletsOpenOfficeZone", false);
+		SecurityZone szVault = modifier.addSecurityZone("VaultZone", false);
+		SecurityZone szOffice1 = modifier.addSecurityZone("Office1Zone", false);
+		SecurityZone szOffice2 = modifier.addSecurityZone("Office2Zone", false);
+		SecurityZone szMeetingRoom1 = modifier.addSecurityZone("MeetingRoom1Zone", false);
+		SecurityZone szMeetingRoom2 = modifier.addSecurityZone("MeetingRoom2Zone", false);
+		SecurityZone szRestaurantZone = modifier.addSecurityZone("RestaurantZone", false);
 
 		modifier.assignObjectToPermission(permissionOpenOffice, szOpenOffice);
 		modifier.assignObjectToPermission(permissionToiletsOpenOffice, szToiletsOpenOffice);
@@ -236,7 +247,6 @@ public class TreblaPolicyGenerator {
 		modifier.assignObjectToPermission(permissionMeetingRoom1, szMeetingRoom1);
 		modifier.assignObjectToPermission(permissionMeetingRoom2, szMeetingRoom2);
 		modifier.assignObjectToPermission(permissionRestaurant, szRestaurantZone);
-
 
 		modifier.setBidirectionalReachability(szLobby, szWorkshop);
 		modifier.setBidirectionalReachability(szWorkshop, szToiletsWorkshop);
@@ -249,6 +259,10 @@ public class TreblaPolicyGenerator {
 		modifier.setBidirectionalReachability(szOpenOffice, szOffice2);
 		modifier.setBidirectionalReachability(szOpenOffice, szRestaurantZone);
 		modifier.setBidirectionalReachability(szOpenOffice, szToiletsOpenOffice);
+
+		// Add Constraints
+		modifier.addBoDUPConstraint("ToiletBreak1", permissionWorkshop, permissionToiletsWorkshop, always);
+		modifier.addBoDUPConstraint("ToiletBreak2", permissionOpenOffice, permissionToiletsOpenOffice, always);
 
 		resource.save(Collections.emptyMap());
 

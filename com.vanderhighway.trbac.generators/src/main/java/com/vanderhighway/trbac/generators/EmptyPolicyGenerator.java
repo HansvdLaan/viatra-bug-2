@@ -21,13 +21,13 @@ public class EmptyPolicyGenerator {
 
 	public static void main(String[] args) throws IOException, InvocationTargetException, ModelManipulationException, ModelManipulationException, ParseException {
 
-        Resource resource = GeneratorUtil.generateAndSaveResource(ePackage, "empty_policy");
-        SecurityPolicy policy = GeneratorUtil.buildBasicSecurityPolicy(ePackage, resource, "DummySecurityPolicy",
+        Resource resource = GeneratorUtil.createAndSaveTRBACModel("empty_policy");
+		SiteAccessControlSystem system = GeneratorUtil.buildBasicSecurityPolicy(ePackage, resource, "DummySecurityPolicy",
                 "DummyAuthorizationPolicy", "DummySchedule",
                 "2020-01-01", "2021-01-01");
 
         final AdvancedViatraQueryEngine engine = AdvancedViatraQueryEngine.createUnmanagedEngine(new EMFScope(resource));
-        PolicyModifier modifier = new PolicyModifier(engine, (SecurityPolicy) resource.getContents().get(0), resource);
+        PolicyModifier modifier = new PolicyModifier(engine, (SiteAccessControlSystem) resource.getContents().get(0), resource);
 
 		Map<String, DayOfWeekSchedule> dayOfWeekScheduleMap = new HashMap<>();
 		Map<String, Map<Integer, DayOfMonthSchedule>> dayOfMonthScheduleMap = new HashMap();

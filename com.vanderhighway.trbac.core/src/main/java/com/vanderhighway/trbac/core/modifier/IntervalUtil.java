@@ -5,6 +5,7 @@ import com.brein.time.timeintervals.intervals.IntegerInterval;
 import com.vanderhighway.trbac.aggregators.Scenario;
 import com.vanderhighway.trbac.core.modifier.PolicyModifier;
 import com.vanderhighway.trbac.model.trbac.model.*;
+import com.vanderhighway.trbac.patterns.DayOfWeekInstanceP;
 import com.vanderhighway.trbac.patterns.TimeRangeP;
 import org.eclipse.emf.common.util.ECollections;
 import org.eclipse.emf.common.util.EList;
@@ -118,7 +119,7 @@ public class IntervalUtil {
 
     public static void processRemoveRange(PolicyModifier modifier, IntervalTree tree,
                                                           TimeRangeP.Match match) throws ModelManipulationException{
-        System.out.println("Process RemoveRange called with:" + match.toString());
+        //System.out.println("Process RemoveRange called with:" + match.toString());
         EList<DayScheduleTimeRange> DayScheduleTimeRanges = match.getInstance().getDayScheduleTimeRanges();
         ECollections.sort(DayScheduleTimeRanges, new DayScheduleTimeRangeComperator()); //Note: regular Collections.sort can not be used! see: https://www.eclipse.org/forums/index.php?t=msg&th=127964/
 
