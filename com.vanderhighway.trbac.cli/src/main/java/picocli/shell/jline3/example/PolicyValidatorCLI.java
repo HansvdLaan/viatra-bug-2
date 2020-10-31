@@ -18,6 +18,7 @@ import org.eclipse.viatra.query.runtime.api.AdvancedViatraQueryEngine;
 import org.eclipse.viatra.query.runtime.api.ViatraQueryEngineOptions;
 import org.eclipse.viatra.query.runtime.emf.EMFScope;
 import org.eclipse.viatra.query.runtime.localsearch.matcher.integration.LocalSearchEMFBackendFactory;
+import org.eclipse.viatra.query.runtime.rete.matcher.DRedReteBackendFactory;
 import org.eclipse.viatra.query.runtime.rete.matcher.TimelyReteBackendFactory;
 import org.eclipse.viatra.query.runtime.util.ViatraQueryLoggingUtil;
 import org.eclipse.viatra.transformation.runtime.emf.modelmanipulation.ModelManipulationException;
@@ -50,6 +51,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -131,36 +133,6 @@ public class PolicyValidatorCLI {
             }
         }
     }
-
-//    @Command(sortOptions = false, name = "nested",mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
-//            description = "Hosts more sub-subcommands")
-//    static class Nested implements Runnable {
-//        public void run() {
-//            System.out.println("I'm a nested subcommand. I don't do much, but I have sub-subcommands!");
-//        }
-//
-//        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
-//                description = "Multiplies two numbers.")
-//        public void multiply(@Option(names = {"-l", "--left"}, required = true) int left,
-//                             @Option(names = {"-r", "--right"}, required = true) int right) {
-//            System.out.printf("%d * %d = %d%n", left, right, left * right);
-//        }
-//
-//        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
-//                description = "Adds two numbers.")
-//        public void add(@Option(names = {"-l", "--left"}, required = true) int left,
-//                        @Option(names = {"-r", "--right"}, required = true) int right) {
-//            System.out.printf("%d + %d = %d%n", left, right, left + right);
-//        }
-//
-//        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
-//                description = "Subtracts two numbers.")
-//        public void subtract(@Option(names = {"-l", "--left"}, required = true) int left,
-//                             @Option(names = {"-r", "--right"}, required = true) int right) {
-//            System.out.printf("%d - %d = %d%n", left, right, left - right);
-//        }
-//    }
-
     /**
      * Command that clears the screen.
      */
@@ -235,7 +207,7 @@ public class PolicyValidatorCLI {
                     " |  __/ (_) | | | (__| |_| | |___| | | |  __/ (__|   <  __/ |   \n" +
                     " |_|   \\___/|_|_|\\___|\\__, |\\____|_| |_|\\___|\\___|_|\\_\\___|_|   \n" +
                     "                      |___/                                     ");
-            System.out.println("version 1.0.2");
+            System.out.println("version 1.0.4");
 
             //URI uri = URI.createFileURI("models/basic/intervals.trbac");
             //URI uri = URI.createFileURI("empty_policy_all_schedules.trbac");
@@ -266,8 +238,8 @@ public class PolicyValidatorCLI {
             new Thread(queryEngineSpinner).start();
 
             ViatraQueryEngineOptions options = ViatraQueryEngineOptions.defineOptions()
-                    .withDefaultBackend(TimelyReteBackendFactory.INSTANCE)
-                    .withDefaultCachingBackend(TimelyReteBackendFactory.INSTANCE)
+                    .withDefaultBackend(DRedReteBackendFactory.INSTANCE)
+                    .withDefaultCachingBackend(DRedReteBackendFactory.INSTANCE)
                     .withDefaultSearchBackend(LocalSearchEMFBackendFactory.INSTANCE)
                     .build();
             final AdvancedViatraQueryEngine engine = AdvancedViatraQueryEngine.createUnmanagedEngine(new EMFScope(set), options);
@@ -335,7 +307,7 @@ public class PolicyValidatorCLI {
                     "description of entity commands"},
             footer = {"", "Press Ctl-D to exit."},
             subcommands = {
-                    AddCommand.class, RemoveCommand.class, AssignCommand.class, DeassignCommand.class, ShowCommand.class})
+                    AddCommand.class, RemoveCommand.class, AssignCommand.class, DeassignCommand.class, ShowCommand.class, ExportCommand.class})
     static class EntityCommands implements Runnable {
         LineReaderImpl reader;
         PrintWriter out;
@@ -363,38 +335,44 @@ public class PolicyValidatorCLI {
                 description = "Add a user")
         public void user(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             CLIContainer.getInstance().getModifier().addUser(name);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Add a role")
-        public void role(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+        public void role(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             CLIContainer.getInstance().getModifier().addRole(name);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Add a demarcation")
-        public void demarcation(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+        public void demarcation(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             CLIContainer.getInstance().getModifier().addDemarcation(name);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Add a permission")
-        public void permission(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+        public void permission(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             CLIContainer.getInstance().getModifier().addPermission(name);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Add a security zone")
         public void securityzone(@Option(names = {"-building"}, required = true) String buildingName,
                                  @Option(names = {"-name"}, required = true) String name,
-                                 @Option(names = {"-public"}, required = false) boolean isPublic) throws ModelManipulationException {
+                                 @Option(names = {"-public"}, required = false) boolean isPublic) throws ModelManipulationException, InvocationTargetException {
             CLIContainer.getInstance().getModifier().addSecurityZone(name, isPublic);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Add a temporal context")
-        public void temporalcontext(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+        public void temporalcontext(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             CLIContainer.getInstance().getModifier().addTemporalContext(name);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
@@ -403,7 +381,7 @@ public class PolicyValidatorCLI {
                                              @Option(names = {"-day"}, required = true) String dayScheduleName,
                                              @Option(names = {"-start"}, required = true) String startTime,
                                              @Option(names = {"-end"}, required = true) String endTime
-                                             ) throws ModelManipulationException, ParseException {
+                                             ) throws ModelManipulationException, ParseException, InvocationTargetException {
             TemporalContext context = (TemporalContext) CLIContainer.getInstance().getElement(temporalContextName, TemporalContext.class);
             if(context == null) {System.out.println("Unkown temporal context: " + context); return;}
 
@@ -429,10 +407,17 @@ public class PolicyValidatorCLI {
                     );
                     daySchedule = CLIContainer.getInstance().getModifier().addDayOfYearSchedule(wmSchedule, dayScheduleName);
                     CLIContainer.getInstance().getModifier().addDayScheduleTimeRange(daySchedule, new IntegerInterval(0, 1439));
+                    CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
                 }
             }
 
             CLIContainer.getInstance().getModifier().addTemporalContextInstance(context, daySchedule, new IntegerInterval(toMinutes(startTime), toMinutes(endTime)));
+
+            //To prevent spurious scenarios appearing and dissapearing
+            CLIContainer.getInstance().getEngine().delayUpdatePropagation( () -> {
+                CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
+                return null;
+            });
             CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
@@ -445,7 +430,7 @@ public class PolicyValidatorCLI {
                 @Option(names = {"-dem"}, required = true) String demarcationName,
                 @Option(names = {"-command"}, required = true) String commandName,
                 @Option(names = {"-priority"}, required = true) int priority
-        ) throws ModelManipulationException {
+        ) throws ModelManipulationException, InvocationTargetException {
             TemporalContext context = (TemporalContext) CLIContainer.getInstance().getElement(temporalContextName, TemporalContext.class);
             Role role = (Role) CLIContainer.getInstance().getElement(roleName, Role.class);
             Demarcation demarcation = (Demarcation) CLIContainer.getInstance().getElement(demarcationName, Demarcation.class);
@@ -456,6 +441,7 @@ public class PolicyValidatorCLI {
             } else {
                 System.out.println("Command should either be \"grant\" or \"revoke\", not " + commandName);
             }
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
     }
 
@@ -469,72 +455,82 @@ public class PolicyValidatorCLI {
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a user")
-        public void user(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+        public void user(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             User user = (User) CLIContainer.getInstance().getElement(name, User.class);
             CLIContainer.getInstance().getModifier().removeUser(user);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a role")
-        public void role(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+        public void role(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             Role role = (Role) CLIContainer.getInstance().getElement(name, Role.class);
             CLIContainer.getInstance().getModifier().removeRole(role);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a demarcation")
-        public void demarcation(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+        public void demarcation(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             Demarcation demarcation = (Demarcation) CLIContainer.getInstance().getElement(name, Demarcation.class);
             CLIContainer.getInstance().getModifier().removeDemarcation(demarcation);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a permission")
-        public void permission(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+        public void permission(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             Permission permission = (Permission) CLIContainer.getInstance().getElement(name, Permission.class);
             CLIContainer.getInstance().getModifier().removePermission(permission);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a security zone")
-        public void securityzone(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+        public void securityzone(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             SecurityZone securityZone = (SecurityZone) CLIContainer.getInstance().getElement(name, SecurityZone.class);
             CLIContainer.getInstance().getModifier().removeSecurityZone(securityZone);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a temporal context")
-        public void temporalcontext(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+        public void temporalcontext(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             TemporalContext context = (TemporalContext) CLIContainer.getInstance().getElement(name, TemporalContext.class);
             CLIContainer.getInstance().getModifier().removeTemporalContext(context);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a temporal context instance")
-        public void temporalcontextinstance(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+        public void temporalcontextinstance(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             TimeRange timeRange = (TimeRange) CLIContainer.getInstance().getElement(name, TimeRange.class);
             CLIContainer.getInstance().getModifier().removeTemporalContextInstance(timeRange);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a temporal grant rule")
-        public void temporalgrantrule(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+        public void temporalgrantrule(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             TemporalGrantRule rule = (TemporalGrantRule) CLIContainer.getInstance().getElement(name, TemporalGrantRule.class);
             CLIContainer.getInstance().getModifier().removeTemporalGrantRule(rule);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a temporal grant rule")
-        public void temporalauthenticationrule(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+        public void temporalauthenticationrule(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             TemporalAuthenticationRule rule = (TemporalAuthenticationRule) CLIContainer.getInstance().getElement(name, TemporalAuthenticationRule.class);
             CLIContainer.getInstance().getModifier().removeTemporalAuthenticationRule(rule);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove a temporal grant rule")
-        public void constraint(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException {
+        public void constraint(@Option(names = {"-name"}, required = true) String name) throws ModelManipulationException, InvocationTargetException {
             AuthorizationConstraint constraint = (AuthorizationConstraint) CLIContainer.getInstance().getElement(name, AuthorizationConstraint.class);
             CLIContainer.getInstance().getModifier().removeAuthorizationConstraint(constraint);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
     }
 
@@ -548,60 +544,67 @@ public class PolicyValidatorCLI {
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Assign a role to a user")
         public void UR(@Option(names = {"-user"}, required = true) String userName,
-                       @Option(names = {"-role"}, required = true) String roleName) throws ModelManipulationException {
+                       @Option(names = {"-role"}, required = true) String roleName) throws ModelManipulationException, InvocationTargetException {
             User user = (User) CLIContainer.getInstance().getElement(userName, User.class);
             Role role = (Role) CLIContainer.getInstance().getElement(roleName, Role.class);
             CLIContainer.getInstance().getModifier().assignRoleToUser(user, role);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Assign a permission to a demarcation")
         public void DP(@Option(names = {"-dem"}, required = true) String demarcationName,
-                       @Option(names = {"-permission"}, required = true) String permissionName) throws ModelManipulationException {
+                       @Option(names = {"-permission"}, required = true) String permissionName) throws ModelManipulationException, InvocationTargetException {
             Demarcation demarcation = (Demarcation) CLIContainer.getInstance().getElement(demarcationName, Demarcation.class);
             Permission permission = (Permission) CLIContainer.getInstance().getElement(permissionName, Permission.class);
             CLIContainer.getInstance().getModifier().assignPermissionToDemarcation(demarcation, permission);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Assign an object to a permission")
         public void PO(@Option(names = {"-permission"}, required = true) String permissionName,
-                       @Option(names = {"-object"}, required = true) String objectName) throws ModelManipulationException {
+                       @Option(names = {"-object"}, required = true) String objectName) throws ModelManipulationException, InvocationTargetException {
             Permission permission = (Permission) CLIContainer.getInstance().getElement(permissionName, Permission.class);
             SecurityZone securityZone = (SecurityZone) CLIContainer.getInstance().getElement(objectName, SecurityZone.class);
             CLIContainer.getInstance().getModifier().assignObjectToPermission(permission, securityZone);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Set reachability between two zones")
         public void reachability(@Option(names = {"-from"}, required = true) String fromZoneName,
                                  @Option(names = {"-to"}, required = true) String toZoneName,
-                                 @Option(names = {"-bidirectional"}, required = false) boolean isBirectional) throws ModelManipulationException {
+                                 @Option(names = {"-bidirectional"}, required = false) boolean isBirectional) throws ModelManipulationException, InvocationTargetException {
             SecurityZone fromSecurityZone = (SecurityZone) CLIContainer.getInstance().getElement(fromZoneName, SecurityZone.class);
             SecurityZone toSecurityZone = (SecurityZone) CLIContainer.getInstance().getElement(toZoneName, SecurityZone.class);
             if (isBirectional) {
                 CLIContainer.getInstance().getModifier().setBidirectionalReachability(fromSecurityZone, toSecurityZone);
+                CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
             } else {
                 CLIContainer.getInstance().getModifier().setReachability(fromSecurityZone, toSecurityZone);
+                CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
             }
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Set inheritance between two roles")
         public void role_inheritance(@Option(names = {"-junior"}, required = true) String juniorRoleName,
-                                     @Option(names = {"-senior"}, required = true) String seniorRoleName) throws ModelManipulationException {
+                                     @Option(names = {"-senior"}, required = true) String seniorRoleName) throws ModelManipulationException, InvocationTargetException {
             Role juniorRole = (Role) CLIContainer.getInstance().getElement(juniorRoleName, Role.class);
             Role seniorRole = (Role) CLIContainer.getInstance().getElement(seniorRoleName, Role.class);
             CLIContainer.getInstance().getModifier().addRoleInheritance(juniorRole, seniorRole);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Set inheritance between two demarcations")
         public void demarcation_inheritance(@Option(names = {"-sub"}, required = true) String subDemarcationName,
-                                     @Option(names = {"-sup"}, required = true) String supDemarcationName) throws ModelManipulationException {
+                                     @Option(names = {"-sup"}, required = true) String supDemarcationName) throws ModelManipulationException, InvocationTargetException {
             Demarcation subDemarcation = (Demarcation) CLIContainer.getInstance().getElement(subDemarcationName, Demarcation.class);
             Demarcation supDemarcation = (Demarcation) CLIContainer.getInstance().getElement(supDemarcationName, Demarcation.class);
             CLIContainer.getInstance().getModifier().addDemarcationInheritance(subDemarcation, supDemarcation);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
     }
 
@@ -614,35 +617,38 @@ public class PolicyValidatorCLI {
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Assign a role to a user")
         public void UR(@Option(names = {"-user"}, required = true) String userName,
-                       @Option(names = {"-role"}, required = true) String roleName) throws ModelManipulationException {
+                       @Option(names = {"-role"}, required = true) String roleName) throws ModelManipulationException, InvocationTargetException {
             User user = (User) CLIContainer.getInstance().getElement(userName, User.class);
             Role role = (Role) CLIContainer.getInstance().getElement(roleName, Role.class);
             CLIContainer.getInstance().getModifier().deassignRoleFromUser(user, role);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Assign a permission to a demarcation")
         public void DP(@Option(names = {"-dem"}, required = true) String demarcationName,
-                       @Option(names = {"-permission"}, required = true) String permissionName) throws ModelManipulationException {
+                       @Option(names = {"-permission"}, required = true) String permissionName) throws ModelManipulationException, InvocationTargetException {
             Demarcation demarcation = (Demarcation) CLIContainer.getInstance().getElement(demarcationName, Demarcation.class);
             Permission permission = (Permission) CLIContainer.getInstance().getElement(permissionName, Permission.class);
             CLIContainer.getInstance().getModifier().deassignPermissionFromDemarcation(demarcation, permission);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Assign an object to a permission")
         public void PO(@Option(names = {"-permission"}, required = true) String permissionName,
-                       @Option(names = {"-object"}, required = true) String objectName) throws ModelManipulationException {
+                       @Option(names = {"-object"}, required = true) String objectName) throws ModelManipulationException, InvocationTargetException {
             Permission permission = (Permission) CLIContainer.getInstance().getElement(permissionName, Permission.class);
             SecurityZone securityZone = (SecurityZone) CLIContainer.getInstance().getElement(objectName, SecurityZone.class);
             CLIContainer.getInstance().getModifier().deassignObjectFromPermission(permission, securityZone);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Remove reachability between two zones")
         public void reachability(@Option(names = {"-from"}, required = true) String fromZoneName,
                                  @Option(names = {"-to"}, required = true) String toZoneName,
-                                 @Option(names = {"-bidirectional"}, required = false) boolean isBirectional) throws ModelManipulationException {
+                                 @Option(names = {"-bidirectional"}, required = false) boolean isBirectional) throws ModelManipulationException, InvocationTargetException {
             SecurityZone fromSecurityZone = (SecurityZone) CLIContainer.getInstance().getElement(fromZoneName, SecurityZone.class);
             SecurityZone toSecurityZone = (SecurityZone) CLIContainer.getInstance().getElement(toZoneName, SecurityZone.class);
             if(isBirectional) {
@@ -650,24 +656,27 @@ public class PolicyValidatorCLI {
             } else {
                 CLIContainer.getInstance().getModifier().removeReachability(fromSecurityZone, toSecurityZone);
             }
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Set inheritance between two roles")
         public void role_inheritance(@Option(names = {"-junior"}, required = true) String juniorRoleName,
-                                     @Option(names = {"-senior"}, required = true) String seniorRoleName) throws ModelManipulationException {
+                                     @Option(names = {"-senior"}, required = true) String seniorRoleName) throws ModelManipulationException, InvocationTargetException {
             Role juniorRole = (Role) CLIContainer.getInstance().getElement(juniorRoleName, Role.class);
             Role seniorRole = (Role) CLIContainer.getInstance().getElement(seniorRoleName, Role.class);
             CLIContainer.getInstance().getModifier().removeRoleInheritance(juniorRole, seniorRole);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Set inheritance between two demarcations")
         public void demarcation_inheritance(@Option(names = {"-sub"}, required = true) String subDemarcationName,
-                                            @Option(names = {"-sup"}, required = true) String supDemarcationName) throws ModelManipulationException {
+                                            @Option(names = {"-sup"}, required = true) String supDemarcationName) throws ModelManipulationException, InvocationTargetException {
             Demarcation subDemarcation = (Demarcation) CLIContainer.getInstance().getElement(subDemarcationName, Demarcation.class);
             Demarcation supDemarcation = (Demarcation) CLIContainer.getInstance().getElement(supDemarcationName, Demarcation.class);
             CLIContainer.getInstance().getModifier().removeDemarcationInheritance(subDemarcation, supDemarcation);
+            CLIContainer.getInstance().getAutomaticModifier().getTransformation().getExecutionSchema().startUnscheduledExecution();
         }
     }
 
@@ -777,6 +786,22 @@ public class PolicyValidatorCLI {
             for (User user: users) {
                 System.out.println(CLIContainer.getInstance().getIndentation() + user.getName() + "->" +
                         user.getUR().stream().map(Role::getName).sorted().collect(Collectors.toList()));
+            }
+        }
+
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Show the users which are assigned to one or all roles")
+        public void RU(@Option(names = {"-role"}, required = false) String roleName) throws ModelManipulationException {
+            List<Role> roles = new LinkedList<>();
+            if(roleName == null) {
+                roles = CLIContainer.getInstance().getSystem().getAuthorizationPolicy().getRoles();
+            } else {
+                roles.add((Role) CLIContainer.getInstance().getElement(roleName, User.class));
+            }
+            roles = roles.stream().sorted(Comparator.comparing(Role::getName)).collect(Collectors.toList());
+            for (Role role: roles) {
+                System.out.println(CLIContainer.getInstance().getIndentation() + role.getName() + "->" +
+                        role.getRU().stream().map(User::getName).sorted().collect(Collectors.toList()));
             }
         }
 
@@ -957,7 +982,7 @@ public class PolicyValidatorCLI {
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
-                description = "Show DP")
+                description = "Show the permissions assigned to one or all demarcations")
         public void DP(@Option(names = {"-dem"}, required = false) String demarcationName) throws ModelManipulationException {
             List<Demarcation> demarcations = new LinkedList<>();
             if(demarcationName == null) {
@@ -969,6 +994,22 @@ public class PolicyValidatorCLI {
             for (Demarcation demarcation: demarcations) {
                 System.out.println(CLIContainer.getInstance().getIndentation() + demarcation.getName() + "->" +
                         demarcation.getDP().stream().map(Permission::getName).sorted().collect(Collectors.toList()));
+            }
+        }
+
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Show the permissions which are assigned to one or all demaracations")
+        public void PD(@Option(names = {"-perm"}, required = false) String permissionName) throws ModelManipulationException {
+            List<Permission> permissions = new LinkedList<>();
+            if(permissionName == null) {
+                permissions = CLIContainer.getInstance().getSystem().getAuthorizationPolicy().getPermissions();
+            } else {
+                permissions.add((Permission) CLIContainer.getInstance().getElement(permissionName, Permission.class));
+            }
+            permissions = permissions.stream().sorted(Comparator.comparing(Permission::getName)).collect(Collectors.toList());
+            for (Permission permission: permissions) {
+                System.out.println(CLIContainer.getInstance().getIndentation() + permission.getName() + "->" +
+                        permission.getPD().stream().map(Demarcation::getName).sorted().collect(Collectors.toList()));
             }
         }
 
@@ -1032,16 +1073,16 @@ public class PolicyValidatorCLI {
                     partialTemporalContexts.add((TemporalContext) CLIContainer.getInstance().getElement(temporalContextName, TemporalContext.class));
                 }
             }
-            SecurityZoneAccessible.Match partialMatch = SecurityZoneAccessible.Matcher.create().newMatch(partialMatchUser, null, null);
-            SecurityZoneAccessible.Matcher matcher = CLIContainer.getInstance().getEngine().getMatcher(SecurityZoneAccessible.instance());
-            Set<SecurityZoneAccessible.Match> matches = new HashSet<>(matcher.getAllMatches(partialMatch));
-            for (SecurityZoneAccessible.Match match: matches){
-                relation.putIfAbsent(match.getUser(), new HashMap<>());
-                if(match.getScenario().containsAll(partialTemporalContexts)) {
-                    relation.get(match.getUser()).putIfAbsent(match.getScenario(), new HashSet<>());
-                    relation.get(match.getUser()).get(match.getScenario()).add(match.getZone());
-                }
-            }
+//            SecurityZoneAccessible.Match partialMatch = SecurityZoneAccessible.Matcher.create().newMatch(partialMatchUser, null, null);
+//            SecurityZoneAccessible.Matcher matcher = CLIContainer.getInstance().getEngine().getMatcher(SecurityZoneAccessible.instance());
+//            Set<SecurityZoneAccessible.Match> matches = new HashSet<>(matcher.getAllMatches(partialMatch));
+//            for (SecurityZoneAccessible.Match match: matches){
+//                relation.putIfAbsent(match.getUser(), new HashMap<>());
+//                if(match.getScenario().containsAll(partialTemporalContexts)) {
+//                    relation.get(match.getUser()).putIfAbsent(match.getScenario(), new HashSet<>());
+//                    relation.get(match.getUser()).get(match.getScenario()).add(match.getZone());
+//                }
+//            }
             List<User> sortedUsers = relation.keySet().stream().sorted(Comparator.comparing(User::getName)).collect(Collectors.toList());
             for (User user: sortedUsers) {
                 if(sortedUsers.size() != 1) {
@@ -1102,19 +1143,19 @@ public class PolicyValidatorCLI {
         ) throws ParseException, ModelManipulationException {
             if(dateString == null) {
                 Set<Scenarios.Match> matches = CLIContainer.getInstance().getEngine().getMatcher(Scenarios.instance()).getAllMatches().stream().collect(Collectors.toSet());
-                List<String> groups = new LinkedList<>();
+                List<String> scenarioStrings = new LinkedList();
                 for (Scenarios.Match match : matches) {
                     String scenarioString = match.getScenario().toString();
                     // Please forgive me, for I have written horrible code.
                     if (example) {
                         scenarioString += " (ex: " + getExampleDateScheduleTimeRange(match.getScenario()) + ")";
                     }
-                    groups.add(scenarioString);
+                    scenarioStrings.add(scenarioString);
                 }
 
-                Collections.sort(groups);
-                for (String group : groups) {
-                    System.out.println(group);
+                Collections.sort(scenarioStrings);
+                for (int i = 0; i < scenarioStrings.size(); i++) {
+                    System.out.println(i + ": " + scenarioStrings.get(i));
                 }
             } else {
                 throw new IllegalArgumentException("TODO: fix this");
@@ -1130,6 +1171,41 @@ public class PolicyValidatorCLI {
 //                    System.out.println( "[" + fromMinutesToHHmm(match.getStarttime()) + "-" + fromMinutesToHHmm(match.getEndtime()) + "]"
 //                            + " " + match.getScenario().toString());
 //                }
+            }
+        }
+
+        @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
+                description = "Show day schedules instances")
+        public void dayscheduleinstances(
+                @Option(names = {"-week"}, description = "Show all scenarios for a specific date", required = false) boolean showWeek
+                ) throws ModelManipulationException {
+            SiteAccessControlSystem system = (SiteAccessControlSystem) CLIContainer.getInstance().getModel().getContents().get(0);
+            if(showWeek) {
+                List<DayOfWeekSchedule> dayOfWeekSchedules = new ArrayList();
+                dayOfWeekSchedules.add((DayOfWeekSchedule) CLIContainer.getInstance().getElement("Monday", DayOfWeekSchedule.class));
+                dayOfWeekSchedules.add((DayOfWeekSchedule) CLIContainer.getInstance().getElement("Tuesday", DayOfWeekSchedule.class));
+                dayOfWeekSchedules.add((DayOfWeekSchedule) CLIContainer.getInstance().getElement("Wednesday", DayOfWeekSchedule.class));
+                dayOfWeekSchedules.add((DayOfWeekSchedule) CLIContainer.getInstance().getElement("Thursday", DayOfWeekSchedule.class));
+                dayOfWeekSchedules.add((DayOfWeekSchedule) CLIContainer.getInstance().getElement("Friday", DayOfWeekSchedule.class));
+                dayOfWeekSchedules.add((DayOfWeekSchedule) CLIContainer.getInstance().getElement("Saturday", DayOfWeekSchedule.class));
+                dayOfWeekSchedules.add((DayOfWeekSchedule) CLIContainer.getInstance().getElement("Sunday", DayOfWeekSchedule.class));
+                for (DayOfWeekSchedule dayOfWeekSchedule: dayOfWeekSchedules) {
+                    System.out.println(CLIContainer.getInstance().getIndentation() + dayOfWeekSchedule.getName());
+                    CLIContainer.getInstance().increaseIndentation();
+
+                    List<DayScheduleTimeRange> instances = dayOfWeekSchedule.getInstances().stream().sorted(Comparator.comparingInt(TimeRange::getStart)).collect(Collectors.toList());
+                    for (DayScheduleTimeRange instance: instances) {
+                        Scenario scenario = new Scenario(instance.getTemporalContextTimeRanges().stream().map(x -> ((TimeRange) x).eContainer())
+                                .map(x -> (TemporalContext) x).collect(Collectors.toSet()));
+
+                        System.out.println(CLIContainer.getInstance().getIndentation() + timeTimeRangePrettyString(instance));
+                        System.out.println("temporal contexts: " + scenario.toString());
+                        System.out.println("temporal context instances: " + instance.getTemporalContextTimeRanges().stream().map(t -> "(" + t.getName() + ", " + timeTimeRangePrettyString(t) + ")").sorted().collect(Collectors.toList()).toString());
+                        System.out.println();
+                    }
+
+                    CLIContainer.getInstance().decreaseIdentation();
+                }
             }
         }
 
@@ -1216,53 +1292,89 @@ public class PolicyValidatorCLI {
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all constraint violations")
-        public void violations() {
-            SiteAccessControlSystem system = (SiteAccessControlSystem) CLIContainer.getInstance().getModel().getContents().get(0);
-            CLIContainer.getInstance().getEngine().getMatcher(SoDURPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+        public void violations(@Option(names = {"-user"}, required = false) String userName,
+                               @Option(names = {"-role"}, required = false) String roleName,
+                               @Option(names = {"-demarcation"}, required = false) String demarcationName,
+                               @Option(names = {"-permission"}, required = false) String permissionName,
+                               @Option(names = {"-scenario"}, split = ",", splitSynopsisLabel = ",", paramLabel = "CONTEXT",
+                                       required = false) List<String> contextNames) throws ModelManipulationException {
+            User user = null;
+            if(userName != null) {
+                user = (User) CLIContainer.getInstance().getElement(userName, User.class);
+            }
+            Role role = null;
+            if(roleName != null) {
+                role = (Role) CLIContainer.getInstance().getElement(roleName, Role.class);
+            }
+            Demarcation demarcation = null;
+            if(demarcationName != null) {
+                demarcation = (Demarcation) CLIContainer.getInstance().getElement(demarcationName, Demarcation.class);
+            }
+            Permission permission = null;
+            if(permissionName != null) {
+                permission = (Permission) CLIContainer.getInstance().getElement(permissionName, Permission.class);
+            }
+
+            Scenario scenario = null;
+            if(contextNames != null) {
+                Scenario matchScenario = new Scenario(new HashSet<>());
+                for (String contextName: contextNames) {
+                    matchScenario.add((TemporalContext) CLIContainer.getInstance().getElement(contextName, TemporalContext.class));
+                }
+                if(CLIContainer.getInstance().getEngine().getMatcher(Scenarios.instance()).getAllMatches(matchScenario).stream().map(Scenarios.Match::getScenario).collect(Collectors.toSet())
+                        .contains(matchScenario)) {
+                    scenario = matchScenario;
+                } else {
+                    System.out.println("Given scenario: " + contextNames.toString() + " does not correspond to an one unique actual scenario!");
+                    return;
+                }
+            }
+
+            CLIContainer.getInstance().getEngine().getMatcher(SoDURPattern.instance()).getAllMatches(null, user).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(SoDUDPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(SoDUDPattern.instance()).getAllMatches(null, scenario, user).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(SoDUPPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(SoDUPPattern.instance()).getAllMatches(null, scenario, user).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(SoDRDPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(SoDRDPattern.instance()).getAllMatches(null, scenario, role).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(SoDRPPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(SoDRPPattern.instance()).getAllMatches(null, scenario, role).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(SoDDPPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(SoDDPPattern.instance()).getAllMatches(null, demarcation).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(PrerequisiteURPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(PrerequisiteURPattern.instance()).getAllMatches(null, user).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(PrerequisiteURPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(PrerequisiteUDPattern.instance()).getAllMatches(null, scenario, user).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(PrerequisiteURPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(PrerequisiteUPPattern.instance()).getAllMatches(null, scenario, user).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(PrerequisiteRDPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(PrerequisiteRDPattern.instance()).getAllMatches(null, scenario, role).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(PrerequisiteRPPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(PrerequisiteRPPattern.instance()).getAllMatches(null, scenario, role).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(PrerequisiteDPPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(PrerequisiteDPPattern.instance()).getAllMatches(null, demarcation).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(BoDURPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(BoDURPattern.instance()).getAllMatches(null, user).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(BoDUDPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(BoDUDPattern.instance()).getAllMatches(null, scenario, user).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(BoDUPPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(BoDUPPattern.instance()).getAllMatches(null, scenario, user).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(BoDRDPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(BoDRDPattern.instance()).getAllMatches(null , scenario, role).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(BoDRPPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(BoDRPPattern.instance()).getAllMatches(null, scenario, role).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(BoDDPPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(BoDDPPattern.instance()).getAllMatches(null, demarcation).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
             CLIContainer.getInstance().getEngine().getMatcher(CardinalityURPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(CardinalityUDPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(CardinalityUDPattern.instance()).getAllMatches(null, scenario, null).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(CardinalityUPPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(CardinalityUPPattern.instance()).getAllMatches(null, scenario, null).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(CardinalityRDPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(CardinalityRDPattern.instance()).getAllMatches(null, scenario, null).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(CardinalityRPPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(CardinalityRPPattern.instance()).getAllMatches(null, scenario, null).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
             CLIContainer.getInstance().getEngine().getMatcher(CardinalityDPPattern.instance()).getAllMatches().stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","").replace("Pattern","") + " - " + c.prettyPrint().replace("\"","")));
@@ -1270,32 +1382,92 @@ public class PolicyValidatorCLI {
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
                 description = "Show all policy smells")
-        public void smells() {
+        public void smells(@Option(names = {"-user"}, required = false) String userName,
+                           @Option(names = {"-role"}, required = false) String roleName,
+                           @Option(names = {"-demarcation"}, required = false) String demarcationName,
+                           @Option(names = {"-permission"}, required = false) String permissionName,
+                           @Option(names = {"-object"}, required = false) String objectName,
+                           @Option(names = {"-scenario"}, split = ",", splitSynopsisLabel = ",", paramLabel = "CONTEXT",
+                                   required = false) List<String> contextNames) throws ModelManipulationException {
+            User user = null;
+            if(userName != null) {
+                user = (User) CLIContainer.getInstance().getElement(userName, User.class);
+            }
+            Role role = null;
+            if(roleName != null) {
+                role = (Role) CLIContainer.getInstance().getElement(roleName, Role.class);
+            }
+            Demarcation demarcation = null;
+            if(demarcationName != null) {
+                demarcation = (Demarcation) CLIContainer.getInstance().getElement(demarcationName, Demarcation.class);
+            }
+            Permission permission = null;
+            if(permissionName != null) {
+                permission = (Permission) CLIContainer.getInstance().getElement(permissionName, Permission.class);
+            }
+
+            SecurityZone zone = null;
+            if(objectName != null) {
+                zone = (SecurityZone) CLIContainer.getInstance().getElement(objectName, SecurityZone.class);
+            }
+
+            Scenario scenario = null;
+            if(contextNames != null) {
+                Scenario matchScenario = new Scenario(new HashSet<>());
+                for (String contextName: contextNames) {
+                    matchScenario.add((TemporalContext) CLIContainer.getInstance().getElement(contextName, TemporalContext.class));
+                }
+                if(CLIContainer.getInstance().getEngine().getMatcher(Scenarios.instance()).getAllMatches(matchScenario).stream().map(Scenarios.Match::getScenario).collect(Collectors.toSet())
+                        .contains(matchScenario)) {
+                    scenario = matchScenario;
+                }
+                else {
+                    System.out.println("Given scenario: " + contextNames.toString() + " does not correspond to an  actual scenario!");
+                    return;
+                }
+            }
+
             SiteAccessControlSystem system = (SiteAccessControlSystem) CLIContainer.getInstance().getModel().getContents().get(0);
-            CLIContainer.getInstance().getEngine().getMatcher(UnusedRole.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(UnusedRole.instance()).getAllMatches(role).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(UnusedDemarcation.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(UnusedDemarcation.instance()).getAllMatches(demarcation).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(UnusedPermission.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(UnusedPermission.instance()).getAllMatches(permission).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(ZombieDemarcation.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(ZombieDemarcation.instance()).getAllMatches(demarcation).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(ZombiePermission.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(ZombiePermission.instance()).getAllMatches(permission).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(UnreachableZone.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            //CLIContainer.getInstance().getEngine().getMatcher(UnreachableZone.instance()).getAllMatches(zone).stream().forEach(c -> System.out.println(
+            //        c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
+            CLIContainer.getInstance().getEngine().getMatcher(GodUser.instance()).getAllMatches(user).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(GodUser.instance()).getAllMatches().stream().forEach(c -> System.out.println(
+            CLIContainer.getInstance().getEngine().getMatcher(GodRole.instance()).getAllMatches(role).stream().forEach(c -> System.out.println(
                     c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(GodRole.instance()).getAllMatches().stream().forEach(c -> System.out.println(
-                    c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(IgnoredRoleInheritance.instance()).getAllMatches().stream().forEach(c -> System.out.println(
-                    c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(IgnoredDemarcationInheritance.instance()).getAllMatches().stream().forEach(c -> System.out.println(
-                    c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(UserCanGetTrapped.instance()).getAllMatches().stream().forEach(c -> System.out.println(
-                    c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
-            CLIContainer.getInstance().getEngine().getMatcher(UninvocablePermission.instance()).getAllMatches().stream().forEach(c -> System.out.println(
-                    c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
+
+            if(role == null) {
+                CLIContainer.getInstance().getEngine().getMatcher(IgnoredRoleInheritance.instance()).getAllMatches(user, null, null).stream().forEach(c -> System.out.println(
+                        c.patternName().replace("com.vanderhighway.trbac.patterns.", "") + " - " + c.prettyPrint().replace("\"", "")));
+            } else {
+                CLIContainer.getInstance().getEngine().getMatcher(IgnoredRoleInheritance.instance()).getAllMatches(user, role, null).stream().forEach(c -> System.out.println(
+                        c.patternName().replace("com.vanderhighway.trbac.patterns.", "") + " - " + c.prettyPrint().replace("\"", "")));
+                CLIContainer.getInstance().getEngine().getMatcher(IgnoredRoleInheritance.instance()).getAllMatches(user, null, role).stream().forEach(c -> System.out.println(
+                        c.patternName().replace("com.vanderhighway.trbac.patterns.", "") + " - " + c.prettyPrint().replace("\"", "")));
+            }
+
+            if(demarcation == null) {
+                CLIContainer.getInstance().getEngine().getMatcher(IgnoredDemarcationInheritance.instance()).getAllMatches(role, scenario, null, null).stream().forEach(c -> System.out.println(
+                        c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
+            } else {
+                CLIContainer.getInstance().getEngine().getMatcher(IgnoredDemarcationInheritance.instance()).getAllMatches(role, scenario, demarcation, null).stream().forEach(c -> System.out.println(
+                        c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
+                CLIContainer.getInstance().getEngine().getMatcher(IgnoredDemarcationInheritance.instance()).getAllMatches(role, scenario, null, demarcation).stream().forEach(c -> System.out.println(
+                        c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
+            }
+//            CLIContainer.getInstance().getEngine().getMatcher(UserCanGetTrapped.instance()).getAllMatches(user, scenario, zone).stream().forEach(c -> System.out.println(
+//                    c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
+//            CLIContainer.getInstance().getEngine().getMatcher(UninvocablePermission.instance()).getAllMatches(user, scenario, permission, zone).stream().forEach(c -> System.out.println(
+//                    c.patternName().replace("com.vanderhighway.trbac.patterns.","") + " - " + c.prettyPrint().replace("\"","")));
         }
 
         @Command(sortOptions = false, mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class},
@@ -1372,6 +1544,7 @@ public class PolicyValidatorCLI {
         newDateString = newDateString + "_" + dateString;
         return newDateString;
     }
+
     public static int toMinutes(String time) {
         return (int) ChronoUnit.MINUTES.between(LocalTime.MIDNIGHT, LocalTime.parse(time));
     }
@@ -1380,8 +1553,13 @@ public class PolicyValidatorCLI {
         if(timeRange == null) {
             return "";
         }
-        return timeRange.getDaySchedule().getName() + " " +
-                fromMinutesToHHmm(timeRange.getStart()) + "-" +
-                fromMinutesToHHmm(timeRange.getEnd());
+        if(timeRange instanceof DayScheduleTimeRange) {
+            return fromMinutesToHHmm(timeRange.getStart()) + "-" +
+                    fromMinutesToHHmm(timeRange.getEnd());
+        } else {
+            return timeRange.getDaySchedule().getName() + " " +
+                    fromMinutesToHHmm(timeRange.getStart()) + "-" +
+                    fromMinutesToHHmm(timeRange.getEnd());
+        }
     }
 }

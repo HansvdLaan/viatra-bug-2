@@ -13,14 +13,14 @@ public class SmellsUpdateListenerFactory {
         engine.addMatchUpdateListener(UnusedDemarcation.Matcher.on(engine), SmellsUpdateListenerFactory.getUnusedDemarcationUpdateListener(), fireNow);
         engine.addMatchUpdateListener(ZombieDemarcation.Matcher.on(engine), SmellsUpdateListenerFactory.getZombieDemarcationUpdateListener(), fireNow);
         engine.addMatchUpdateListener(ZombiePermission.Matcher.on(engine), SmellsUpdateListenerFactory.getZombiePermissionUpdateListener(), fireNow);
-        engine.addMatchUpdateListener(UnreachableZone.Matcher.on(engine), SmellsUpdateListenerFactory.getUnreachableZoneUpdateListener(), fireNow);
+        //engine.addMatchUpdateListener(UnreachableZone.Matcher.on(engine), SmellsUpdateListenerFactory.getUnreachableZoneUpdateListener(), fireNow);
         engine.addMatchUpdateListener(GodUser.Matcher.on(engine), SmellsUpdateListenerFactory.getGodUserUpdateListener(), fireNow);
         engine.addMatchUpdateListener(GodRole.Matcher.on(engine), SmellsUpdateListenerFactory.getGodRoleUpdateListener(), fireNow);
         engine.addMatchUpdateListener(IgnoredRoleInheritance.Matcher.on(engine), SmellsUpdateListenerFactory.getIgnoredRoleInheritanceUpdateListener(), fireNow);
         engine.addMatchUpdateListener(IgnoredDemarcationInheritance.Matcher.on(engine), SmellsUpdateListenerFactory.getIgnoredDemarcationInheritanceUpdateListener(), fireNow);
 
-        engine.addMatchUpdateListener(UserCanGetTrapped.Matcher.on(engine), SmellsUpdateListenerFactory.getUserCanGetTrappedUpdateListener(), fireNow);
-        engine.addMatchUpdateListener(UninvocablePermission.Matcher.on(engine), SmellsUpdateListenerFactory.getUninvocablePermissionUpdateListener(), fireNow);
+        //engine.addMatchUpdateListener(UserCanGetTrapped.Matcher.on(engine), SmellsUpdateListenerFactory.getUserCanGetTrappedUpdateListener(), fireNow);
+        //engine.addMatchUpdateListener(UninvocablePermission.Matcher.on(engine), SmellsUpdateListenerFactory.getUninvocablePermissionUpdateListener(), fireNow);
     }
 
     public static IMatchUpdateListener<UnusedRole.Match> getUnusedRoleUpdateListener() {
@@ -103,21 +103,21 @@ public class SmellsUpdateListenerFactory {
         };
     }
 
-    public static IMatchUpdateListener<UnreachableZone.Match> getUnreachableZoneUpdateListener() {
-        return new IMatchUpdateListener<UnreachableZone.Match>() {
-            @Override
-            public void notifyAppearance(UnreachableZone.Match match) {
-                System.out.println("[ADD UnreachableZone Match] zone " + match.getZone().getName()
-                        + " is not reachable");
-            }
-
-            @Override
-            public void notifyDisappearance(UnreachableZone.Match match) {
-                System.out.println("[REMOVE UnreachableZone Match] zone " + match.getZone().getName()
-                        + " is not reachable");
-            }
-        };
-    }
+//    public static IMatchUpdateListener<UnreachableZone.Match> getUnreachableZoneUpdateListener() {
+//        return new IMatchUpdateListener<UnreachableZone.Match>() {
+//            @Override
+//            public void notifyAppearance(UnreachableZone.Match match) {
+//                System.out.println("[ADD UnreachableZone Match] zone " + match.getZone().getName()
+//                        + " is not reachable");
+//            }
+//
+//            @Override
+//            public void notifyDisappearance(UnreachableZone.Match match) {
+//                System.out.println("[REMOVE UnreachableZone Match] zone " + match.getZone().getName()
+//                        + " is not reachable");
+//            }
+//        };
+//    }
 
     public static IMatchUpdateListener<IgnoredRoleInheritance.Match> getIgnoredRoleInheritanceUpdateListener() {
         return new IMatchUpdateListener<IgnoredRoleInheritance.Match>() {
@@ -186,39 +186,39 @@ public class SmellsUpdateListenerFactory {
         };
     }
 
-    public static IMatchUpdateListener<UninvocablePermission.Match> getUninvocablePermissionUpdateListener() {
-        return new IMatchUpdateListener<UninvocablePermission.Match>() {
-            @Override
-            public void notifyAppearance(UninvocablePermission.Match match) {
-                System.out.println("[ADD UninvocablePermission Match] user " + match.getUser().getName()
-                        + " can not invoke the granted permission " + match.getPermission().getName() + " during " +
-                        match.getScenario());
-            }
-
-            @Override
-            public void notifyDisappearance(UninvocablePermission.Match match) {
-                System.out.println("[REMOVE UninvocablePermission Match] user " + match.getUser().getName()
-                        + " can not invoke the granted permission " + match.getPermission().getName() + " during " +
-                        match.getScenario());
-            }
-        };
-    }
-
-    public static IMatchUpdateListener<UserCanGetTrapped.Match> getUserCanGetTrappedUpdateListener() {
-        return new IMatchUpdateListener<UserCanGetTrapped.Match>() {
-            @Override
-            public void notifyAppearance(UserCanGetTrapped.Match match) {
-                System.out.println("[ADD UserCanGetTrapped Match] user " + match.getUser().getName()
-                        + " can get trapped in zone " + match.getZone().getName() + " during " +
-                        match.getScenario());
-            }
-
-            @Override
-            public void notifyDisappearance(UserCanGetTrapped.Match match) {
-                System.out.println("[ADD UserCanGetTrapped Match] user " + match.getUser().getName()
-                        + " can get trapped in zone " + match.getZone().getName() + " during " +
-                        match.getScenario());
-            }
-        };
-    }
+//    public static IMatchUpdateListener<UninvocablePermission.Match> getUninvocablePermissionUpdateListener() {
+//        return new IMatchUpdateListener<UninvocablePermission.Match>() {
+//            @Override
+//            public void notifyAppearance(UninvocablePermission.Match match) {
+//                System.out.println("[ADD UninvocablePermission Match] user " + match.getUser().getName()
+//                        + " can not invoke the granted permission " + match.getPermission().getName() + " during " +
+//                        match.getScenario());
+//            }
+//
+//            @Override
+//            public void notifyDisappearance(UninvocablePermission.Match match) {
+//                System.out.println("[REMOVE UninvocablePermission Match] user " + match.getUser().getName()
+//                        + " can not invoke the granted permission " + match.getPermission().getName() + " during " +
+//                        match.getScenario());
+//            }
+//        };
+//    }
+//
+//    public static IMatchUpdateListener<UserCanGetTrapped.Match> getUserCanGetTrappedUpdateListener() {
+//        return new IMatchUpdateListener<UserCanGetTrapped.Match>() {
+//            @Override
+//            public void notifyAppearance(UserCanGetTrapped.Match match) {
+//                System.out.println("[ADD UserCanGetTrapped Match] user " + match.getUser().getName()
+//                        + " can get trapped in zone " + match.getZone().getName() + " during " +
+//                        match.getScenario());
+//            }
+//
+//            @Override
+//            public void notifyDisappearance(UserCanGetTrapped.Match match) {
+//                System.out.println("[ADD UserCanGetTrapped Match] user " + match.getUser().getName()
+//                        + " can get trapped in zone " + match.getZone().getName() + " during " +
+//                        match.getScenario());
+//            }
+//        };
+//    }
 }

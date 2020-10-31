@@ -4,35 +4,22 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Room {
-    private String id;
-    private String label;
-    private boolean isPublic;
+    public int id;
+    private String name;
+    public boolean isOutside;
+    public int floorID;
 
-    public Room() {
 
+    public String getName() {
+        return this.name;
     }
 
-    public void setId(String id) {
-        this.id = id;
-        if(id.contains(".")) {
-            this.isPublic = true;
-        }
+    public void setName(String name) {
+        this.name = name.replace("&", " and ").replace(" ", "_");
     }
 
-    public String getId() {
-        return this.id;
-    }
-
-    public void setLabel(String label) {
-        label = label.replace("&", " and ").replace(" ", "_");
-        this.label = label;
-    }
-
-    public String getLabel() {
-        return this.label;
-    }
-
-    public boolean isPublic() {
-        return this.isPublic;
+    public Room setFloorID(int floorID) {
+        this.floorID = floorID;
+        return this;
     }
 }

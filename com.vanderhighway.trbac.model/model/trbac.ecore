@@ -80,6 +80,8 @@
         upperBound="-1" eType="#//AuthorizationConstraint" eOpposite="#//AuthorizationConstraint/temporalContext"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="temporalAuthenticationRules"
         upperBound="-1" eType="#//TemporalAuthenticationRule" eOpposite="#//TemporalAuthenticationRule/temporalContext"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="myScenarios" upperBound="-1"
+        eType="#//MyScenario" eOpposite="#//MyScenario/temporalContexts"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="DayScheduleTimeRange" eSuperTypes="#//TimeRange">
     <eStructuralFeatures xsi:type="ecore:EReference" name="temporalContextTimeRanges"
@@ -228,6 +230,8 @@
         iD="true"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="startDate" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="endDate" eType="ecore:EDataType http://www.eclipse.org/emf/2003/XMLType#//String"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="myScenarios" upperBound="-1"
+        eType="#//MyScenario" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="DayOfYearSchedule" eSuperTypes="#//DaySchedule">
     <eStructuralFeatures xsi:type="ecore:EReference" name="dayOfWeekMonthSchedule"
@@ -248,5 +252,9 @@
         eOpposite="#//TemporalContext/temporalAuthenticationRules"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="securityZone" eType="#//SecurityZone"
         eOpposite="#//SecurityZone/constrainedBy"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="MyScenario">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="temporalContexts" upperBound="-1"
+        eType="#//TemporalContext" eOpposite="#//TemporalContext/myScenarios"/>
   </eClassifiers>
 </ecore:EPackage>

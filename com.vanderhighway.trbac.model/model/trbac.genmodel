@@ -58,6 +58,7 @@
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference trbac.ecore#//TemporalContext/temporalGrantRules"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference trbac.ecore#//TemporalContext/authorizationConstraints"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference trbac.ecore#//TemporalContext/temporalAuthenticationRules"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference trbac.ecore#//TemporalContext/myScenarios"/>
     </genClasses>
     <genClasses ecoreClass="trbac.ecore#//DayScheduleTimeRange">
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference trbac.ecore#//DayScheduleTimeRange/temporalContextTimeRanges"/>
@@ -176,6 +177,7 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//Schedule/name"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//Schedule/startDate"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//Schedule/endDate"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference trbac.ecore#//Schedule/myScenarios"/>
     </genClasses>
     <genClasses ecoreClass="trbac.ecore#//DayOfYearSchedule">
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference trbac.ecore#//DayOfYearSchedule/dayOfWeekMonthSchedule"/>
@@ -190,6 +192,9 @@
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute trbac.ecore#//TemporalAuthenticationRule/status"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference trbac.ecore#//TemporalAuthenticationRule/temporalContext"/>
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference trbac.ecore#//TemporalAuthenticationRule/securityZone"/>
+    </genClasses>
+    <genClasses ecoreClass="trbac.ecore#//MyScenario">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference trbac.ecore#//MyScenario/temporalContexts"/>
     </genClasses>
   </genPackages>
 </genmodel:GenModel>

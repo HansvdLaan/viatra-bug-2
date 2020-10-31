@@ -11,9 +11,9 @@ import java.util.stream.Collectors;
 public class RelationsUpdateListenerFactory {
 
 	public static void addALlUpdateListeners(AdvancedViatraQueryEngine engine, boolean fireNow) {
-		engine.addMatchUpdateListener(USP.Matcher.on(engine), RelationsUpdateListenerFactory.getAccessRelationUpdateListener(), fireNow);
+		//engine.addMatchUpdateListener(USP.Matcher.on(engine), RelationsUpdateListenerFactory.getAccessRelationUpdateListener(), fireNow);
 		engine.addMatchUpdateListener(Scenarios.Matcher.on(engine), RelationsUpdateListenerFactory.getScenarioUpdateListener(), fireNow);
-		engine.addMatchUpdateListener(RSD.Matcher.on(engine), RelationsUpdateListenerFactory.getRDSUpdateListener(), fireNow);
+		//engine.addMatchUpdateListener(RSD.Matcher.on(engine), RelationsUpdateListenerFactory.getRDSUpdateListener(), fireNow);
 	}
 
 	public static IMatchUpdateListener<USP.Match> getAccessRelationUpdateListener() {
@@ -81,33 +81,33 @@ public class RelationsUpdateListenerFactory {
 		};
 	}
 
-	public static IMatchUpdateListener<Reachable.Match> getReachableUpdateListener() {
-		return new IMatchUpdateListener<Reachable.Match>() {
-			@Override
-			public void notifyAppearance(Reachable.Match match) {
-				System.out.println("[ADD Reachable Match] " + match.getZone().getName());
-			}
+//	public static IMatchUpdateListener<Reachable.Match> getReachableUpdateListener() {
+//		return new IMatchUpdateListener<Reachable.Match>() {
+//			@Override
+//			public void notifyAppearance(Reachable.Match match) {
+//				System.out.println("[ADD Reachable Match] " + match.getZone().getName());
+//			}
+//
+//			@Override
+//			public void notifyDisappearance(Reachable.Match match) {
+//				System.out.println("[REM Reachable Match]" + match.getZone().getName());
+//			}
+//		};
+//	}
 
-			@Override
-			public void notifyDisappearance(Reachable.Match match) {
-				System.out.println("[REM Reachable Match]" + match.getZone().getName());
-			}
-		};
-	}
-
-	public static IMatchUpdateListener<SecurityZoneAccessible.Match> getSecurityZoneAccessibleUpdateListener() {
-		return new IMatchUpdateListener<SecurityZoneAccessible.Match>() {
-			@Override
-			public void notifyAppearance(SecurityZoneAccessible.Match match) {
-				System.out.println("[ADD SecurityZoneAccessible Match] " + match.getUser().getName()
-						+ " - " + match.getZone().getName() + " during " + match.getScenario().toString());
-			}
-
-			@Override
-			public void notifyDisappearance(SecurityZoneAccessible.Match match) {
-				System.out.println("[REMOVE SecurityZoneAccessible Match] " + match.getUser().getName()
-						+ " - " + match.getZone().getName() + " during " + match.getScenario().toString());
-			}
-		};
-	}
+//	public static IMatchUpdateListener<SecurityZoneAccessible.Match> getSecurityZoneAccessibleUpdateListener() {
+//		return new IMatchUpdateListener<SecurityZoneAccessible.Match>() {
+//			@Override
+//			public void notifyAppearance(SecurityZoneAccessible.Match match) {
+//				System.out.println("[ADD SecurityZoneAccessible Match] " + match.getUser().getName()
+//						+ " - " + match.getZone().getName() + " during " + match.getScenario().toString());
+//			}
+//
+//			@Override
+//			public void notifyDisappearance(SecurityZoneAccessible.Match match) {
+//				System.out.println("[REMOVE SecurityZoneAccessible Match] " + match.getUser().getName()
+//						+ " - " + match.getZone().getName() + " during " + match.getScenario().toString());
+//			}
+//		};
+//	}
 }

@@ -6,7 +6,7 @@
 	<groupId>com.vanderhighway.trbac</groupId>
 	<artifactId>com.vanderhighway.trbac</artifactId>
 	<version>0.20.0-SNAPSHOT</version>
-	<packaging>pom</packaging>
+    <packaging>pom</packaging>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -30,6 +30,7 @@
 				<module>com.vanderhighway.trbac.core</module>
 				<module>com.vanderhighway.trbac.cli</module>
 				<module>com.vanderhighway.trbac.generators</module>
+				<module>com.vanderhighway.trbac.evaluator</module>
 			</modules>
 		</profile>
 	</profiles>

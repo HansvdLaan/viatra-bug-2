@@ -6,8 +6,8 @@ package com.vanderhighway.trbac.patterns
 
 import "https://vanderhighway.com/trbac/2020"
 import "http://www.eclipse.org/emf/2002/Ecore"
-//import java ^java.util.Set
-//import java ^java.util.HashSet
+import java ^java.util.Set
+import java ^java.util.HashSet
 import java ^com.vanderhighway.trbac.aggregators.distinct
 import java ^com.vanderhighway.trbac.aggregators.Scenario
 import java ^com.vanderhighway.trbac.patterns.PolicyRelations;

@@ -3,6 +3,7 @@ package com.vanderhighway.trbac.aggregators;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.vanderhighway.trbac.model.trbac.model.MyScenario;
 import com.vanderhighway.trbac.model.trbac.model.TemporalContext;
 
 public class Scenario extends HashSet<TemporalContext> {
@@ -19,4 +20,11 @@ public class Scenario extends HashSet<TemporalContext> {
           String prettyString = contextList.toString();
           return prettyString;
     }
+
+
+    public static Scenario toScenario(Object myScenario) {
+    	MyScenario sc = (MyScenario) myScenario;
+    	return new Scenario(sc.getTemporalContexts());
+    }
+   
 }

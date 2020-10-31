@@ -13,6 +13,7 @@ import org.eclipse.xtext.xbase.lib.Extension;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
@@ -81,7 +82,7 @@ public class GeneratorUtil {
         return system;
     }
 
-    public static DayOfWeekSchedule getOrCreateDayOfWeekSchedule(PolicyModifier modifier, String scheduleName) throws ModelManipulationException {
+    public static DayOfWeekSchedule getOrCreateDayOfWeekSchedule(PolicyModifier modifier, String scheduleName) throws ModelManipulationException, InvocationTargetException {
         DayOfWeekSchedule daySchedule = (DayOfWeekSchedule) modifier.getResource().getEObject(scheduleName);
         if(daySchedule == null) {
             if (allDays.contains(scheduleName)) {
@@ -91,7 +92,7 @@ public class GeneratorUtil {
         return daySchedule;
     }
 
-    public static DayOfMonthSchedule getOrCreateDayOfMonthSchedule(PolicyModifier modifier, String scheduleName) throws ModelManipulationException {
+    public static DayOfMonthSchedule getOrCreateDayOfMonthSchedule(PolicyModifier modifier, String scheduleName) throws ModelManipulationException, InvocationTargetException {
         DayOfMonthSchedule daySchedule = (DayOfMonthSchedule) modifier.getResource().getEObject(scheduleName);
         if(daySchedule == null) {
             String[] parts = scheduleName.split("_");
@@ -102,7 +103,7 @@ public class GeneratorUtil {
         return daySchedule;
     }
 
-    public static DayOfWeekMonthSchedule getOrCreateDayOfWeekMonthSchedule(PolicyModifier modifier, String scheduleName) throws ModelManipulationException {
+    public static DayOfWeekMonthSchedule getOrCreateDayOfWeekMonthSchedule(PolicyModifier modifier, String scheduleName) throws ModelManipulationException, InvocationTargetException {
         DayOfWeekMonthSchedule daySchedule = (DayOfWeekMonthSchedule) modifier.getResource().getEObject(scheduleName);
         if(daySchedule == null) {
             String[] parts = scheduleName.split("_");
@@ -113,7 +114,7 @@ public class GeneratorUtil {
         return daySchedule;
     }
 
-    public static DayOfYearSchedule getOrCreateDayOfYearSchedule(PolicyModifier modifier, String scheduleName) throws ModelManipulationException {
+    public static DayOfYearSchedule getOrCreateDayOfYearSchedule(PolicyModifier modifier, String scheduleName) throws ModelManipulationException, InvocationTargetException {
         DayOfYearSchedule daySchedule = (DayOfYearSchedule) modifier.getResource().getEObject(scheduleName);
         if(daySchedule == null) {
             String[] parts = scheduleName.split("_");
@@ -123,7 +124,7 @@ public class GeneratorUtil {
         return daySchedule;
     }
 
-    public static void addManyTemporalContextInstances(PolicyModifier modifier, TemporalContext context, List<String> Schedules, List<IntegerInterval> intervals) throws ModelManipulationException {
+    public static void addManyTemporalContextInstances(PolicyModifier modifier, TemporalContext context, List<String> Schedules, List<IntegerInterval> intervals) throws ModelManipulationException, InvocationTargetException {
         for(String schedule: Schedules) {
             DaySchedule daySchedule = (DaySchedule) modifier.getResource().getEObject(schedule);
 

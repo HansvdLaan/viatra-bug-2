@@ -23,6 +23,7 @@ import org.eclipse.viatra.transformation.runtime.emf.rules.eventdriven.EventDriv
 import org.eclipse.viatra.transformation.runtime.emf.transformation.eventdriven.EventDrivenTransformation;
 import org.eclipse.xtext.xbase.lib.Extension;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -66,7 +67,7 @@ public class PolicyAutomaticModifier {
         }
     }
 
-    public void initialize() {
+    public void initialize() throws InvocationTargetException {
         this.logger.info("Preparing transformation rules.");
         //this.policyModifier.execute(com.vanderhighway.trbac.core.modifier.IntervalUtil.addAllAlwaysRanges(policyModifier, this.tree));
         this.transformation = createTransformation();
@@ -78,7 +79,7 @@ public class PolicyAutomaticModifier {
         this.transformation.getExecutionSchema().startUnscheduledExecution();
     }
 
-    private EventDrivenTransformation createTransformation() {
+    private EventDrivenTransformation createTransformation() throws InvocationTargetException {
         EventDrivenTransformation transformation = null;
         this.manipulation = new SimpleModelManipulations(this.engine);
         transformation = EventDrivenTransformation.forEngine(this.engine)
@@ -95,43 +96,45 @@ public class PolicyAutomaticModifier {
         return;
     }
 
-    private EventDrivenTransformationRule<TimeRangeP.Match, TimeRangeP.Matcher> ProcessTimeRangeModifications() {
-        EventDrivenTransformationRule<TimeRangeP.Match, TimeRangeP.Matcher> dayrangerule =
-                this._eventDrivenTransformationRuleFactory.createRule(TimeRangeP.instance()).action(
-                        CRUDActivationStateEnum.CREATED, (TimeRangeP.Match it) -> {
-                            try {
-                                IntervalTree tree = trees.get(it.getInstance().getDaySchedule().getName());
+    private EventDrivenTransformationRule<TimeRangeP.Match, TimeRangeP.Matcher> ProcessTimeRangeModifications() throws InvocationTargetException {
+        return engine.delayUpdatePropagation( () -> {
+            EventDrivenTransformationRule<TimeRangeP.Match, TimeRangeP.Matcher> dayrangerule =
+                    this._eventDrivenTransformationRuleFactory.createRule(TimeRangeP.instance()).action(
+                            CRUDActivationStateEnum.CREATED, (TimeRangeP.Match it) -> {
+                                try {
+                                    IntervalTree tree = trees.get(it.getInstance().getDaySchedule().getName());
 
-                                if(tree == null) {
-                                    tree = IntervalTreeBuilder.newBuilder()
-                                            .usePredefinedType(IntervalTreeBuilder.IntervalType.LONG)
-                                            .collectIntervals(interval -> new ListIntervalCollection())
-                                            .build();
-                                    tree.add(new IntegerInterval(0, 1439));
-                                    this.trees.put(it.getInstance().getDaySchedule().getName(), tree);
+                                    if(tree == null) {
+                                        tree = IntervalTreeBuilder.newBuilder()
+                                                .usePredefinedType(IntervalTreeBuilder.IntervalType.LONG)
+                                                .collectIntervals(interval -> new ListIntervalCollection())
+                                                .build();
+                                        tree.add(new IntegerInterval(0, 1439));
+                                        this.trees.put(it.getInstance().getDaySchedule().getName(), tree);
+                                    }
+                                    //Check if the match hasn't been processed before, e.g. in
+                                    // the case of the always day schedule time ranges.
+                                    if(it.getInstance().getDayScheduleTimeRanges().size() == 0) {
+                                        IntervalUtil.processAddRange(this.policyModifier, tree, it);
+                                    }
+                                } catch (ModelManipulationException e) {
+                                    e.printStackTrace();
                                 }
-                                //Check if the match hasn't been processed before, e.g. in
-                                // the case of the always day schedule time ranges.
-                                if(it.getInstance().getDayScheduleTimeRanges().size() == 0) {
-                                    IntervalUtil.processAddRange(this.policyModifier, tree, it);
+                            }).action(
+                            CRUDActivationStateEnum.UPDATED, (TimeRangeP.Match it) -> {
+                            }).action(
+                            CRUDActivationStateEnum.DELETED, (TimeRangeP.Match it) -> {
+                                try {
+                                    IntervalTree tree = trees.get(it.getInstance().getDaySchedule().getName());
+                                    IntervalUtil.processRemoveRange(this.policyModifier, tree, it);
+                                } catch (ModelManipulationException e) {
+                                    e.printStackTrace();
                                 }
-                            } catch (ModelManipulationException e) {
-                                e.printStackTrace();
                             }
-                        }).action(
-                        CRUDActivationStateEnum.UPDATED, (TimeRangeP.Match it) -> {
-                        }).action(
-                        CRUDActivationStateEnum.DELETED, (TimeRangeP.Match it) -> {
-                            try {
-                                IntervalTree tree = trees.get(it.getInstance().getDaySchedule().getName());
-                                IntervalUtil.processRemoveRange(this.policyModifier, tree, it);
-                            } catch (ModelManipulationException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                            ).addLifeCycle(Lifecycles.getDefault(false, true))
-                        .name("process-day-ranges").build();
-        return dayrangerule;
+                                ).addLifeCycle(Lifecycles.getDefault(false, true))
+                            .name("process-day-ranges").build();
+            return dayrangerule;
+        });
     }
 
     public EventDrivenTransformation getTransformation() {
