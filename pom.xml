@@ -3,18 +3,18 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
 	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.vanderhighway.trbac</groupId>
-	<artifactId>com.vanderhighway.trbac</artifactId>
+	<groupId>com.vanderhighway.grrbac</groupId>
+	<artifactId>com.vanderhighway.grrbac</artifactId>
 	<version>0.20.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<emf.version>2.10.1.v20140901-1043</emf.version>
-		<viatra.version>2.4.0</viatra.version>
+		<viatra.version>2.4.1</viatra.version>
 		<xtend.version>2.21.0</xtend.version>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
 	</properties>
 
 	<profiles>
@@ -24,13 +24,13 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<modules>
-				<module>com.vanderhighway.trbac.model</module>
-				<module>com.vanderhighway.trbac.patterns</module>
-				<module>com.vanderhighway.trbac.aggregators</module>
-				<module>com.vanderhighway.trbac.core</module>
-				<module>com.vanderhighway.trbac.cli</module>
-				<module>com.vanderhighway.trbac.generators</module>
-				<module>com.vanderhighway.trbac.evaluator</module>
+				<module>com.vanderhighway.grrbac.model</module>
+				<module>com.vanderhighway.grrbac.patterns</module>
+				<module>com.vanderhighway.grrbac.aggregators</module>
+				<module>com.vanderhighway.grrbac.core</module>
+				<module>com.vanderhighway.grrbac.cli</module>
+				<module>com.vanderhighway.grrbac.examples</module>
+				<module>com.vanderhighway.grrbac.evaluator</module>
 			</modules>
 		</profile>
 	</profiles>
@@ -58,7 +58,8 @@
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
-			<url>https://repo.eclipse.org/content/repositories/viatra-snapshots/</url>
+<!--			<url>https://repo.eclipse.org/content/repositories/viatra-snapshots/</url>-->
+				<url>https://repo.eclipse.org/content/repositories/viatra-releases/</url>
 		</pluginRepository>
 		<pluginRepository>
 			<id>maven-plugin</id>
