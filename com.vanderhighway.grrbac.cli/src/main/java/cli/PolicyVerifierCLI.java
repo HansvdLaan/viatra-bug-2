@@ -158,7 +158,7 @@ public class PolicyVerifierCLI {
                     " |_|   \\___/|_|_|\\___|\\__, | \\_/ \\___|_|  |_|_| |_|\\___|_|   \n" +
                     "                      |___/                                  ");
             System.out.println("For GR-RBAC policies.");
-            System.out.println("version 1.0.0");
+            System.out.println("version 1.0.1");
             System.out.println();
 
             URI uri = URI.createFileURI(args[0]);
@@ -244,7 +244,7 @@ public class PolicyVerifierCLI {
             checkerSpinner.stop();
             System.out.printf("\u0008");
 
-            System.out.println("Policy Validator fully initialized! Please enter a command. ");
+            System.out.println("Policy Verifier fully initialized! Please enter a command. ");
 
             // start the shell and process input until the user quits with Ctrl-D
             String line;
