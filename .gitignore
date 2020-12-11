@@ -21,5 +21,4 @@ target/
 /com.vanderhighway.grrbac.model.tests/
 /com.vanderhighway.grrbac.model.editor/
 /com.vanderhighway.grrbac.model.edit/
-/com.vanderhighway.grrbac.examples/src/main/java/com/vanderhighway/trbac/generators/BenchmarkTestCaseGenerator.java
 /com.vanderhighway.grrbac.examples/src/main/java/com/vanderhighway/grrbac/examples/benchmark/
